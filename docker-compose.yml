@@ -1,0 +1,28 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: aegisai_mongo
+    # Run as a single-node replica set so MongoDB transactions are available.
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      # Wait until the replica set is initiated before marking healthy.
+      test: |
+        mongosh --quiet --eval "
+          try {
+            rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] })
+          } catch(e) {
+            // Already initiated — that's fine
+          }
+          db.runCommand({ ping: 1 })
+        "
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  mongo_data:
