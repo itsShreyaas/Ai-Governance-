@@ -16,25 +16,28 @@ Enterprise AI Tool Governance, Policy Enforcement, and Risk Assessment Platform.
 - Node.js (v20+ recommended)
 - Docker & Docker Compose (for local single-node MongoDB replica set)
 
-### 2. Configure Environment
-Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
-```
-
-### 3. Start Local MongoDB Replica Set
+### 2. Start Local MongoDB Replica Set
 MongoDB transactions require a replica set. The included `docker-compose.yml` initializes a single-node replica set `rs0` on port 27017:
 ```bash
 docker compose up -d
 ```
 
-### 4. Install Dependencies
+### 3. Install Dependencies
 ```bash
 npm install
 ```
 
+### 4. Run Checks
+Run repository-wide lint, typecheck, tests, and production build from the root:
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
 ### 5. Run Database Scripts
-Navigate to `apps/api` or run via npm workspaces:
+Run scripts from the root using the API workspace:
 
 - **Create Indexes:**
   ```bash
@@ -48,11 +51,7 @@ Navigate to `apps/api` or run via npm workspaces:
   ```bash
   npm run verify-audit --workspace=@aegisai/api
   ```
-- **Typecheck:**
-  ```bash
-  npm run typecheck --workspace=@aegisai/shared
-  npm run typecheck --workspace=@aegisai/api
-  ```
+The API scripts require `MONGODB_URI`. Copy `.env.example` to `.env` and set the variable for your shell, or provide it directly in the environment before running them. The API server and authentication routes are not implemented yet; start the current application UI with `npm run dev`.
 
 ---
 

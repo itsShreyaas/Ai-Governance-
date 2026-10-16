@@ -9,7 +9,6 @@
  */
 
 import "dotenv/config";
-import mongoose from "mongoose";
 import { connectDB, disconnectDB } from "../db/connection.js";
 import { User } from "../models/User.js";
 import { Tool } from "../models/Tool.js";
@@ -24,7 +23,7 @@ async function createIndexes() {
 
   console.log("🔧 Ensuring indexes...");
 
-  const models: Array<mongoose.Model<any>> = [
+  const models = [
     User,
     Tool,
     Policy,

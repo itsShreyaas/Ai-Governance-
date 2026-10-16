@@ -57,7 +57,7 @@ Five roles use the product; the repo's mock audit log already names four of them
 
 ## 5. Current state of the repo
 
-The repo (one commit, about 1,700 lines under `src/`) is a Vite + React 19 single-page app with routing, theming and six dashboard components, but no backend and no persistence.
+The repository is an npm-workspaces monorepo. The Vite + React 19 frontend remains at the repository root (`src/`) and includes routing, theming, dashboard components and mock data. `packages/shared` contains strict TypeScript enums, types and Zod schemas. `apps/api` contains strict TypeScript Mongoose models, database/index/seed/verification scripts, and a hash-chained `auditService` with tests. There is not yet an Express server, HTTP API, authentication flow, or persisted end-to-end product workflow.
 
 | Module | Route | Status | Notes |
 | --- | --- | --- | --- |
@@ -71,7 +71,7 @@ The repo (one commit, about 1,700 lines under `src/`) is a Vite + React 19 singl
 
 **Also present:** light and dark theme, responsive sidebar and topbar, a search box in the topbar that isn't wired to anything, and sidebar badges (6 tools, 2 assessments, 10 events) that are hard-coded.
 
-**Known gaps to fix in Stage 2:** the README is still the unmodified Vite template; the package name is "proj"; the dashboard's "+2 this month" and "Avg response 1.4d" figures are literal strings, not calculated; the 2 assessments badge has no data behind it; no tests; no TypeScript; there is a single "Initial commit" in history.
+**Current foundation and gaps:** the root package is named `aegisai` and declares the API and shared package as npm workspaces. The frontend is still JavaScript and uses mock data; the API package currently provides models and scripts, not HTTP routes or server behavior. The dashboard's "+2 this month" and "Avg response 1.4d" figures are literal strings, not calculated, and the 2-assessments badge has no data behind it. Tests currently cover shared schemas and the audit service; UI, API-route and authentication tests do not exist yet.
 
 ## 6. User stories
 

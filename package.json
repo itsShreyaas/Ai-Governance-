@@ -1,12 +1,18 @@
 {
-  "name": "proj",
+  "name": "aegisai",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "lint": "oxlint",
+    "build": "npm run build --workspace=@aegisai/shared && npm run build --workspace=@aegisai/api && vite build",
+    "typecheck": "npm run build --workspace=@aegisai/shared && npm run typecheck --workspace=@aegisai/shared && npm run typecheck --workspace=@aegisai/api",
+    "test": "npm run build --workspace=@aegisai/shared && npm run test --workspaces --if-present",
+    "lint": "oxlint && npm run lint --workspaces --if-present",
     "preview": "vite preview"
   },
   "dependencies": {

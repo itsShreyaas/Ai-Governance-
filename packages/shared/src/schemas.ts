@@ -28,8 +28,21 @@ import {
 const enumValues = <T extends Record<string, string>>(obj: T) =>
   Object.values(obj) as [string, ...string[]];
 
+export const UserRoleSchema = z.enum(enumValues(UserRole));
+
 // ─── User ─────────────────────────────────────────────────────────────────────
 // Server-controlled: isActive (defaults true), passwordHash (set by auth service)
+export const LoginSchema = z
+  .object({
+    email: z.string().email().toLowerCase(),
+    password: z.string().min(1).max(128),
+  })
+  .strict();
+
+export const AccessTokenSchema = z.string().regex(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+export const RefreshTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{64}$/);
+export const CsrfHeaderSchema = z.literal("1");
+
 export const CreateUserSchema = z
   .object({
     name: z.string().min(1).max(200),
@@ -173,6 +186,9 @@ export const UpdateSettingsSchema = z
 
 // ─── Inferred TS types ────────────────────────────────────────────────────────
 export type CreateUserInput = z.infer<typeof CreateUserSchema>;
+export type LoginInput = z.infer<typeof LoginSchema>;
+export type AccessTokenInput = z.infer<typeof AccessTokenSchema>;
+export type RefreshTokenInput = z.infer<typeof RefreshTokenSchema>;
 export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
 export type CreateToolInput = z.infer<typeof CreateToolSchema>;
 export type UpdateToolInput = z.infer<typeof UpdateToolSchema>;

@@ -6,10 +6,14 @@ Sources: `prd-aegisai.md` (PRD), `tech-stack-aegisai-mern.md` (TECH_STACK), `sec
 
 | Part | State |
 | --- | --- |
-| React single-page app (Vite, React 19, Tailwind 4, React Router, Recharts) | Built (Stage 1), runs on mock data |
-| API, database, authentication, audit store, integrations | Proposed (Stage 2 and 3); nothing built |
+| React single-page app at repository root (`src/`; Vite, React 19, Tailwind 4, React Router, Recharts) | Built (Stage 1), runs on mock data |
+| `packages/shared` (TypeScript enums, types and Zod schemas) | Implemented; shared package is an npm workspace |
+| `apps/api` (TypeScript, Mongoose models, DB scripts, audit service) | Partial foundation implemented; API is an npm workspace |
+| Express server, HTTP routes, authentication and role middleware | Not implemented yet |
+| Audit persistence service and tests | Implemented; MongoDB-backed append/hash-chain logic is present |
+| External integrations | Proposed (Stage 3); not implemented |
 
-Stage 2 adds an API, MongoDB and an insert-only audit store behind the existing frontend. The application code is not changed by this document.
+The current repository is a root-level Vite frontend plus `apps/api` and `packages/shared`; the frontend has not moved into `apps/web`. The API has Mongoose models, connection and maintenance scripts, and an audit service, but no Express server or routes. Stage 2 adds those missing HTTP and authentication layers behind the existing frontend.
 
 ## 2. Project structure
 

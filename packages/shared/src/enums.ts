@@ -38,6 +38,7 @@ export const AuditEventType = {
   RoleChanged: "ROLE_CHANGED",
   Login: "LOGIN",
   LoginFailed: "LOGIN_FAILED",
+  SessionRefresh: "SESSION_REFRESH",
   Export: "EXPORT",
   ChainVerifyFailed: "CHAIN_VERIFY_FAILED",
 } as const;

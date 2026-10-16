@@ -1,4 +1,19 @@
 import { describe, it, expect } from "vitest";
+import { LoginSchema } from "./schemas.js";
+
+describe("LoginSchema", () => {
+  it("normalizes email and accepts a password", () => {
+    expect(LoginSchema.parse({ email: "ADMIN@example.com", password: "secret" })).toEqual({
+      email: "admin@example.com",
+      password: "secret",
+    });
+  });
+
+  it("rejects extra fields and malformed credentials", () => {
+    expect(LoginSchema.safeParse({ email: "not-an-email", password: "" }).success).toBe(false);
+    expect(LoginSchema.safeParse({ email: "a@example.com", password: "secret", role: "Admin" }).success).toBe(false);
+  });
+});
 import {
   CreateToolSchema,
   CreateUserSchema,
