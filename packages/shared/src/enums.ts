@@ -27,6 +27,9 @@ export type DataSensitivity = (typeof DataSensitivity)[keyof typeof DataSensitiv
 // ─── Audit Event Type ────────────────────────────────────────────────────────
 export const AuditEventType = {
   ToolSubmission: "TOOL_SUBMISSION",
+  ToolUpdated: "TOOL_UPDATED",
+  RequestSubmitted: "REQUEST_SUBMITTED",
+  RequestReviewed: "REQUEST_REVIEWED",
   PolicyUpdate: "POLICY_UPDATE",
   ApprovalGranted: "APPROVAL_GRANTED",
   RiskEscalation: "RISK_ESCALATION",
@@ -36,6 +39,7 @@ export const AuditEventType = {
   UserCreated: "USER_CREATED",
   UserUpdated: "USER_UPDATED",
   RoleChanged: "ROLE_CHANGED",
+  SettingsUpdated: "SETTINGS_UPDATED",
   Login: "LOGIN",
   LoginFailed: "LOGIN_FAILED",
   SessionRefresh: "SESSION_REFRESH",

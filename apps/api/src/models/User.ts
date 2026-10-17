@@ -10,6 +10,8 @@ export interface IUser extends Document {
   isActive: boolean;
   failedLoginAttempts: number;
   lockoutUntil?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const UserSchema = new Schema<IUser>(

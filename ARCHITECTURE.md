@@ -9,11 +9,11 @@ Sources: `prd-aegisai.md` (PRD), `tech-stack-aegisai-mern.md` (TECH_STACK), `sec
 | React single-page app at repository root (`src/`; Vite, React 19, Tailwind 4, React Router, Recharts) | Built (Stage 1), runs on mock data |
 | `packages/shared` (TypeScript enums, types and Zod schemas) | Implemented; shared package is an npm workspace |
 | `apps/api` (TypeScript, Mongoose models, DB scripts, audit service) | Partial foundation implemented; API is an npm workspace |
-| Express server, HTTP routes, authentication and role middleware | Not implemented yet |
+| Express server, authentication and role middleware | Implemented; auth, Tool Registry, Requests, Audit, Dashboard, Settings and Users routes are available, remaining domain routes are pending |
 | Audit persistence service and tests | Implemented; MongoDB-backed append/hash-chain logic is present |
 | External integrations | Proposed (Stage 3); not implemented |
 
-The current repository is a root-level Vite frontend plus `apps/api` and `packages/shared`; the frontend has not moved into `apps/web`. The API has Mongoose models, connection and maintenance scripts, and an audit service, but no Express server or routes. Stage 2 adds those missing HTTP and authentication layers behind the existing frontend.
+The current repository is a root-level Vite frontend plus `apps/api` and `packages/shared`; the frontend has not moved into `apps/web`. The API has Mongoose models, connection and maintenance scripts, an audit service, authentication routes, Tool Registry and Requests routes, audit listing/export/verification, a database-backed Dashboard API, and Admin-only Settings and Users routes. Stage 2 continues with the remaining domain routes and frontend wiring.
 
 ## 2. Project structure
 
@@ -81,14 +81,14 @@ REST under `/api/v1`, JSON in and out, one router per module. Route names are a 
 | --- | --- | --- |
 | Auth | POST /auth/login, /auth/refresh, /auth/logout; GET /auth/me | Anyone / signed in |
 | Registry | GET /tools; POST /tools; PATCH /tools/:id; POST /tools/:id/decision | Admin, Compliance (read also Requester, Auditor) |
-| Requests | POST /requests; GET /requests | Requester and up |
+| Requests | POST /requests; GET /requests; PATCH /requests/:id | POST: Requester, Admin, Compliance; GET: Requester (own), Admin, Compliance, Auditor; PATCH: Admin, Compliance |
 | Policy | GET /policies; PUT /policies/:id | Admin changes; others read |
 | Assessments | GET /tools/:id/assessments; POST /assessments | Admin, Compliance |
 | Checker | POST /checker | All signed-in roles |
 | Audit | GET /audit; GET /audit/export (CSV); GET /audit/verify | Admin, Compliance, Auditor (verify: Admin, Auditor) |
 | Dashboard | GET /dashboard | Admin, Compliance, Auditor |
-| Settings | GET /settings; PATCH /settings | Admin |
-| Users | GET /users; POST /users; PATCH /users/:id | Admin |
+| Settings | GET /settings; PATCH /settings | Admin; secret values are write-only |
+| Users | GET /users; POST /users; PATCH /users/:id | Admin; password accepted only at creation |
 
 List endpoints take `page`, `limit`, `sort` and filters and return a total count. A `/health` endpoint exists for host uptime checks. An OpenAPI file generated from the Zod schemas documents the routes.
 

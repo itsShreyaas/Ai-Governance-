@@ -8,6 +8,12 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { HttpError } from "./middleware/httpError.js";
 import { logger } from "./services/logger.js";
 import { authRouter } from "./routes/authRoutes.js";
+import { toolRouter } from "./routes/toolRoutes.js";
+import { requestRouter } from "./routes/requestRoutes.js";
+import { auditRouter } from "./routes/auditRoutes.js";
+import { dashboardRouter } from "./routes/dashboardRoutes.js";
+import { settingsRouter } from "./routes/settingsRoutes.js";
+import { userRouter } from "./routes/userRoutes.js";
 
 const app = express();
 
@@ -33,6 +39,12 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/tools", toolRouter);
+app.use("/api/v1/requests", requestRouter);
+app.use("/api/v1/audit", auditRouter);
+app.use("/api/v1/dashboard", dashboardRouter);
+app.use("/api/v1/settings", settingsRouter);
+app.use("/api/v1/users", userRouter);
 
 app.use((_req, _res, next) => {
   next(new HttpError(404, "NOT_FOUND", "The requested resource was not found"));

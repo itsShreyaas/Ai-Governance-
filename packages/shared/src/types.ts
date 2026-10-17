@@ -17,6 +17,13 @@ import type {
   UserRole,
 } from "./enums.js";
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface UserDoc {
   _id: string;
   name: string;

@@ -8,7 +8,7 @@ AegisAI is a web platform that gives a company one place to register, risk-rate,
 
 **Vision:** no employee uses an AI tool the company hasn't seen, assessed and put a policy around, and any auditor can prove it in minutes.
 
-**Status today:** Stage 1 is a frontend-only React prototype. The Overview dashboard, Tool Registry cards and Audit Log table work on hard-coded mock data for a fictional company ("Acme Global"). Four of seven modules are placeholders marked "Stage 2 Scheduled". There is no backend, login or real data yet.
+**Status today:** The React frontend remains a Stage 1 prototype: the Overview dashboard, Tool Registry cards and Audit Log table use hard-coded mock data for a fictional company ("Acme Global"), and four of seven modules are placeholders marked "Stage 2 Scheduled". Stage 2a now includes an Express API with login, authentication middleware, Tool Registry, Requests, Audit, Dashboard, Settings, and Users endpoints; the frontend is not yet wired to live data.
 
 **This PRD** defines what Stage 2 (a working MVP) and Stage 3 must deliver, based on what the repo already shows.
 
@@ -57,7 +57,7 @@ Five roles use the product; the repo's mock audit log already names four of them
 
 ## 5. Current state of the repo
 
-The repository is an npm-workspaces monorepo. The Vite + React 19 frontend remains at the repository root (`src/`) and includes routing, theming, dashboard components and mock data. `packages/shared` contains strict TypeScript enums, types and Zod schemas. `apps/api` contains strict TypeScript Mongoose models, database/index/seed/verification scripts, and a hash-chained `auditService` with tests. There is not yet an Express server, HTTP API, authentication flow, or persisted end-to-end product workflow.
+The repository is an npm-workspaces monorepo. The Vite + React 19 frontend remains at the repository root (`src/`) and includes routing, theming, dashboard components and mock data. `packages/shared` contains strict TypeScript enums, types and Zod schemas. `apps/api` contains an Express server with authentication, Tool Registry, Requests, Audit, Dashboard, Settings, and Users routes, strict TypeScript Mongoose models, database/index/seed/verification scripts, and a hash-chained `auditService` with tests. The frontend is not yet wired to the API.
 
 | Module | Route | Status | Notes |
 | --- | --- | --- | --- |
@@ -71,7 +71,7 @@ The repository is an npm-workspaces monorepo. The Vite + React 19 frontend remai
 
 **Also present:** light and dark theme, responsive sidebar and topbar, a search box in the topbar that isn't wired to anything, and sidebar badges (6 tools, 2 assessments, 10 events) that are hard-coded.
 
-**Current foundation and gaps:** the root package is named `aegisai` and declares the API and shared package as npm workspaces. The frontend is still JavaScript and uses mock data; the API package currently provides models and scripts, not HTTP routes or server behavior. The dashboard's "+2 this month" and "Avg response 1.4d" figures are literal strings, not calculated, and the 2-assessments badge has no data behind it. Tests currently cover shared schemas and the audit service; UI, API-route and authentication tests do not exist yet.
+**Current foundation and gaps:** the root package is named `aegisai` and declares the API and shared package as npm workspaces. The frontend is still JavaScript and uses mock data; it is not yet wired to the implemented API. The dashboard's "+2 this month" and "Avg response 1.4d" figures remain literal UI strings, and the 2-assessments badge has no data behind it because the Assessment API is not implemented. Shared-schema and API route/service tests exist; UI tests remain absent.
 
 ## 6. User stories
 
