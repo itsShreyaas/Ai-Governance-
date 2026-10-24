@@ -62,6 +62,18 @@ export const LoginSchema = z
   })
   .strict();
 
+export const AuthUserSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string().email(),
+    department: z.string(),
+    role: UserRoleSchema,
+  })
+  .strict();
+
+export const AuthUserResponseSchema = z.object({ user: AuthUserSchema }).strict();
+
 export const AccessTokenSchema = z.string().regex(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
 export const RefreshTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{64}$/);
 export const CsrfHeaderSchema = z.literal("1");
@@ -139,6 +151,27 @@ export const ToolListQuerySchema = paginatedQuerySchema(
   },
   "createdAt"
 );
+
+export const ToolResponseSchema = z
+  .object({
+    _id: z.string(),
+    name: z.string(),
+    vendor: z.string(),
+    category: z.string(),
+    description: z.string().optional(),
+    approvalStatus: z.enum(enumValues(ApprovalStatus)),
+    riskLevel: z.enum(enumValues(RiskLevel)),
+    ownerDepartment: z.string(),
+    dataSensitivity: z.enum(enumValues(DataSensitivity)),
+    userCount: z.number().int().nonnegative(),
+    complianceScore: z.number(),
+    lastReviewed: z.coerce.date().optional(),
+    personalData: z.boolean(),
+    archivedAt: z.coerce.date().nullable().optional(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+  })
+  .strict();
 
 // ─── Policy ──────────────────────────────────────────────────────────────────
 // Server-controlled: version (auto-increment), author (from session)
@@ -246,6 +279,38 @@ export const AuditExportQuerySchema = z
   .strict()
   .superRefine(validateAuditDateRange);
 
+export const AuditEventListItemSchema = z
+  .object({
+    sequence: z.number().int(),
+    timestamp: z.coerce.date(),
+    eventType: z.enum(enumValues(AuditEventType)),
+    severity: z.enum(enumValues(AuditSeverity)),
+    toolId: z.string().optional(),
+    actor: z.object({ id: z.string().nullable(), name: z.string().nullable() }).strict(),
+    department: z.string().optional(),
+    details: z.string(),
+  })
+  .strict();
+
+export const AuditVerificationResponseSchema = z
+  .object({
+    valid: z.boolean(),
+    checked: z.number().int().nonnegative(),
+    firstBrokenSequence: z.number().int().positive().optional(),
+  })
+  .strict();
+
+export function paginatedResponseSchema<T extends z.ZodTypeAny>(itemSchema: T) {
+  return z
+    .object({
+      data: z.array(itemSchema),
+      total: z.number().int().nonnegative(),
+      page: z.number().int().positive(),
+      limit: z.number().int().positive(),
+    })
+    .strict();
+}
+
 export const DashboardResponseSchema = z
   .object({
     kpis: z.object({
@@ -277,7 +342,7 @@ export const DashboardResponseSchema = z
       ownerDepartment: z.string().nullable(),
       complianceScore: z.number().nullable(),
       iconColor: z.string().nullable(),
-      submittedAt: z.date(),
+      submittedAt: z.coerce.date(),
       waitingOn: z.string().nullable(),
     }).strict()).max(5),
     recentAudits: z.array(z.object({
@@ -286,7 +351,7 @@ export const DashboardResponseSchema = z
       actorName: z.string().nullable(),
       actorAvatar: z.string(),
       toolName: z.string().nullable(),
-      timestamp: z.date(),
+      timestamp: z.coerce.date(),
       severity: z.enum(enumValues(AuditSeverity)),
     }).strict()).max(10),
   })
@@ -341,6 +406,7 @@ export const UpdateSettingsSchema = z
 // ─── Inferred TS types ────────────────────────────────────────────────────────
 export type CreateUserInput = z.infer<typeof CreateUserSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
+export type AuthUser = z.infer<typeof AuthUserSchema>;
 export type AccessTokenInput = z.infer<typeof AccessTokenSchema>;
 export type RefreshTokenInput = z.infer<typeof RefreshTokenSchema>;
 export type UpdateUserInput = z.infer<typeof UpdateUserSchema>;
@@ -349,6 +415,7 @@ export type CreateToolInput = z.infer<typeof CreateToolSchema>;
 export type UpdateToolInput = z.infer<typeof UpdateToolSchema>;
 export type ToolDecisionInput = z.infer<typeof ToolDecisionSchema>;
 export type ToolListQuery = z.infer<typeof ToolListQuerySchema>;
+export type ToolResponse = z.infer<typeof ToolResponseSchema>;
 export type CreatePolicyInput = z.infer<typeof CreatePolicySchema>;
 export type CreateAssessmentInput = z.infer<typeof CreateAssessmentSchema>;
 export type CreateRequestInput = z.infer<typeof CreateRequestSchema>;
@@ -356,6 +423,8 @@ export type RequestListQuery = z.infer<typeof RequestListQuerySchema>;
 export type UpdateRequestInput = z.infer<typeof UpdateRequestSchema>;
 export type AuditListQuery = z.infer<typeof AuditListQuerySchema>;
 export type AuditExportQuery = z.infer<typeof AuditExportQuerySchema>;
+export type AuditEventListItem = z.infer<typeof AuditEventListItemSchema>;
+export type AuditVerificationResponse = z.infer<typeof AuditVerificationResponseSchema>;
 export type DashboardResponse = z.infer<typeof DashboardResponseSchema>;
 export type RequestDecisionInput = z.infer<typeof RequestDecisionSchema>;
 export type InternalAuditEventInput = z.infer<typeof InternalAuditEventInputSchema>;

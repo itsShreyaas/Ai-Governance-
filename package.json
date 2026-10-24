@@ -11,7 +11,7 @@
     "predev": "npm run build --workspace=@aegisai/shared",
     "dev": "vite",
     "build": "npm run build --workspace=@aegisai/shared && npm run build --workspace=@aegisai/api && vite build",
-    "typecheck": "npm run build --workspace=@aegisai/shared && npm run typecheck --workspace=@aegisai/shared && npm run typecheck --workspace=@aegisai/api && tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "typecheck": "npm run build --workspace=@aegisai/shared && npm run typecheck --workspace=@aegisai/shared && npm run typecheck --workspace=@aegisai/api && tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.test.json",
     "test": "npm run build --workspace=@aegisai/shared && npm run test --workspaces --if-present",
     "lint": "oxlint && npm run lint --workspaces --if-present",
     "preview": "vite preview"

@@ -1,12 +1,12 @@
 import { createContext } from "react";
-import type { LoginInput, UserDoc } from "@aegisai/shared";
+import type { AuthUser, LoginInput } from "@aegisai/shared";
 
 export interface AuthContextValue {
-  user: UserDoc | null;
-  role: UserDoc["role"] | null;
+  user: AuthUser | null;
+  role: AuthUser["role"] | null;
   loading: boolean;
   authError: unknown | null;
-  login: (credentials: LoginInput) => Promise<UserDoc>;
+  login: (credentials: LoginInput) => Promise<AuthUser>;
   logout: () => Promise<void>;
   reloadUser: () => Promise<void>;
 }

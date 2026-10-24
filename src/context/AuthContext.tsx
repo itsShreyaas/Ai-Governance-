@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
-import type { LoginInput, UserDoc } from "@aegisai/shared";
+import type { AuthUser, LoginInput } from "@aegisai/shared";
 import * as api from "../api/client";
 import { ApiError } from "../api/client";
 import { AuthContext } from "./authContextObject";
@@ -7,7 +7,7 @@ import { AuthContext } from "./authContextObject";
 export { AuthContext };
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
-  const [user, setUser] = useState<UserDoc | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<unknown | null>(null);
 
@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     return () => window.removeEventListener("aegis:auth-failed", handleAuthFailure);
   }, [loadUser]);
 
-  const signIn = useCallback(async (credentials: LoginInput) => {
+  const signIn = useCallback(async (credentials: LoginInput): Promise<AuthUser> => {
     const signedInUser = await api.login(credentials);
     setUser(signedInUser);
     setAuthError(null);

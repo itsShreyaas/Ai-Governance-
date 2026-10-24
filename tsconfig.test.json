@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["apps/api/src/test/frontendApiClient.test.ts", "src/vite-env.d.ts"]
+}
