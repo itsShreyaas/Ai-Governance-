@@ -153,7 +153,8 @@ A REST API under `/api/v1`, one router per module, JSON in and out. The route na
 
 | Module | Endpoint | Purpose | Who |
 | --- | --- | --- | --- |
-| Auth | POST /auth/login, /auth/refresh, /auth/logout | Session handling | Anyone |
+| Auth | POST /auth/login | Start a session | Anyone |
+| Auth | POST /auth/refresh, /auth/logout | Rotate or revoke the session | Valid refresh-token cookie; CSRF header required |
 | Auth | GET /auth/me | Current user and role | Signed in |
 | Registry | GET /tools | List with filters and search | Admin, Compliance, Requester, Auditor |
 | Registry | POST /tools, PATCH /tools/:id | Create or edit a tool | Admin, Compliance |

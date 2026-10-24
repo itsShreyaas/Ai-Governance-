@@ -128,6 +128,11 @@ describe("audit routes", () => {
       .get("/api/v1/audit?from=2026-10-18T00%3A00%3A00.000Z&to=2026-10-17T00%3A00%3A00.000Z")
       .set("Cookie", cookie);
     expect(reversed.status).toBe(400);
+
+    const invalidExportFilter = await request(app)
+      .get("/api/v1/audit/export?eventType=not-an-event")
+      .set("Cookie", cookie);
+    expect(invalidExportFilter.status).toBe(400);
   });
 
   it("streams formula-neutralized CSV, quotes special cells, and audits the export", async () => {

@@ -116,6 +116,87 @@ describe("tool registry routes", () => {
     expect(response.body.code).toBe("VALIDATION_ERROR");
   });
 
+  it("rejects server-controlled fields on tool create, update, and decisions", async () => {
+    await createUser(adminEmail);
+    const cookie = await login();
+    const maliciousCreate = await request(app)
+      .post("/api/v1/tools")
+      .set("Cookie", cookie)
+      .set("x-aegis-csrf", "1")
+      .send({
+        ...newTool,
+        approvalStatus: "Approved",
+        riskLevel: "Low",
+        complianceScore: 100,
+      });
+    expect(maliciousCreate.status).toBe(400);
+    expect(await Tool.countDocuments({})).toBe(0);
+
+    const tool = await Tool.create({
+      name: newTool.name,
+      vendor: newTool.vendor,
+      category: newTool.category,
+      ownerDepartment: newTool.ownerDepartment,
+      dataSensitivity: newTool.dataSensitivity,
+      userCount: newTool.userCount,
+    });
+    const maliciousUpdate = await request(app)
+      .patch(`/api/v1/tools/${tool._id}`)
+      .set("Cookie", cookie)
+      .set("x-aegis-csrf", "1")
+      .send({ approvalStatus: "Approved", riskLevel: "Low", complianceScore: 100 });
+    expect(maliciousUpdate.status).toBe(400);
+    expect(await Tool.findById(tool._id)).toMatchObject({
+      approvalStatus: "Pending Review",
+      riskLevel: "Medium",
+      complianceScore: 0,
+    });
+
+    const maliciousDecision = await request(app)
+      .post(`/api/v1/tools/${tool._id}/decision`)
+      .set("Cookie", cookie)
+      .set("x-aegis-csrf", "1")
+      .send({ approvalStatus: "Approved", reason: "Review complete", riskLevel: "Low", complianceScore: 100 });
+    expect(maliciousDecision.status).toBe(400);
+    expect((await Tool.findById(tool._id))?.approvalStatus).toBe("Pending Review");
+  });
+
+  it("returns not found for missing tool updates and decisions and validates their inputs", async () => {
+    await createUser(adminEmail);
+    const cookie = await login();
+    const missingId = new mongoose.Types.ObjectId().toString();
+
+    const invalidUpdate = await request(app)
+      .patch(`/api/v1/tools/${missingId}`)
+      .set("Cookie", cookie)
+      .set("x-aegis-csrf", "1")
+      .send({ userCount: -1 });
+    expect(invalidUpdate.status).toBe(400);
+
+    const missingUpdate = await request(app)
+      .patch(`/api/v1/tools/${missingId}`)
+      .set("Cookie", cookie)
+      .set("x-aegis-csrf", "1")
+      .send({ userCount: 1 });
+    expect(missingUpdate.status).toBe(404);
+    expect(missingUpdate.body.code).toBe("TOOL_NOT_FOUND");
+
+    const invalidDecision = await request(app)
+      .post(`/api/v1/tools/${missingId}/decision`)
+      .set("Cookie", cookie)
+      .set("x-aegis-csrf", "1")
+      .send({ approvalStatus: "Pending Review", reason: "" });
+    expect(invalidDecision.status).toBe(400);
+
+    const missingDecision = await request(app)
+      .post(`/api/v1/tools/${missingId}/decision`)
+      .set("Cookie", cookie)
+      .set("x-aegis-csrf", "1")
+      .send({ approvalStatus: "Approved", reason: "Reviewed" });
+    expect(missingDecision.status).toBe(404);
+    expect(missingDecision.body.code).toBe("TOOL_NOT_FOUND");
+  });
+
   it("requires authentication", async () => {
     const response = await request(app).get("/api/v1/tools");
     expect(response.status).toBe(401);

@@ -60,7 +60,11 @@ const refreshHandler: RequestHandler = async (req, res) => {
 
 const logoutHandler: RequestHandler = async (req, res) => {
   const tokenResult = RefreshTokenSchema.safeParse(req.cookies?.[REFRESH_COOKIE]);
-  if (tokenResult.success) await logout(tokenResult.data);
+  if (!tokenResult.success) {
+    clearSessionCookies(res);
+    throw new HttpError(401, "INVALID_REFRESH_TOKEN", "Refresh token is invalid or expired");
+  }
+  await logout(tokenResult.data);
   clearSessionCookies(res);
   res.status(204).end();
 };

@@ -101,6 +101,21 @@ describe("authentication routes", () => {
     expect(refreshRecord?.tokenHash).toHaveLength(64);
   });
 
+  it("rejects invalid login payloads and unauthenticated logout attempts", async () => {
+    const invalidLogin = await request(app)
+      .post("/api/v1/auth/login")
+      .set("x-aegis-csrf", "1")
+      .send({ email: testEmail, password: testPassword, role: UserRole.Admin });
+    expect(invalidLogin.status).toBe(400);
+    expect(invalidLogin.body.code).toBe("VALIDATION_ERROR");
+
+    const unauthenticatedLogout = await request(app)
+      .post("/api/v1/auth/logout")
+      .set("x-aegis-csrf", "1");
+    expect(unauthenticatedLogout.status).toBe(401);
+    expect(unauthenticatedLogout.body.code).toBe("INVALID_REFRESH_TOKEN");
+  });
+
   it("returns the same generic error for invalid credentials and audits a known account failure", async () => {
     await createUser();
 

@@ -208,6 +208,27 @@ describe("Admin settings and user routes", () => {
     expect(response.body).not.toHaveProperty("passwordHash");
   });
 
+  it("returns not found for a missing user update and validates update fields", async () => {
+    const admin = await createUser("missing-user-admin@example.test");
+    const cookie = await login(admin.email);
+    const missingId = new mongoose.Types.ObjectId().toString();
+
+    const invalid = await request(app)
+      .patch(`/api/v1/users/${missingId}`)
+      .set("Cookie", cookie)
+      .set("x-aegis-csrf", "1")
+      .send({ role: UserRole.System });
+    expect(invalid.status).toBe(400);
+
+    const missing = await request(app)
+      .patch(`/api/v1/users/${missingId}`)
+      .set("Cookie", cookie)
+      .set("x-aegis-csrf", "1")
+      .send({ name: "Not found" });
+    expect(missing.status).toBe(404);
+    expect(missing.body.code).toBe("USER_NOT_FOUND");
+  });
+
   it("prevents an admin from demoting or deactivating their own account", async () => {
     const admin = await createUser("self-admin@example.test");
     const cookie = await login(admin.email);

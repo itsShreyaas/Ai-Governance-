@@ -114,6 +114,16 @@ describe.each(listRoutes)("pagination for $name", ({ path, total }) => {
     expect(response.body.code).toBe("VALIDATION_ERROR");
   });
 
+  it("rejects page and limit values below one", async () => {
+    const invalidPage = await request(app).get(`${path}?page=0`).set("Cookie", adminCookie);
+    expect(invalidPage.status).toBe(400);
+    expect(invalidPage.body.code).toBe("VALIDATION_ERROR");
+
+    const invalidLimit = await request(app).get(`${path}?limit=0`).set("Cookie", adminCookie);
+    expect(invalidLimit.status).toBe(400);
+    expect(invalidLimit.body.code).toBe("VALIDATION_ERROR");
+  });
+
   it("returns an empty page beyond the end and preserves the filtered total", async () => {
     const response = await request(app).get(`${path}?page=99&limit=1`).set("Cookie", adminCookie);
     expect(response.status).toBe(200);

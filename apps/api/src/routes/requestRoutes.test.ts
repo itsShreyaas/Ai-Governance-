@@ -228,6 +228,7 @@ describe("request routes", () => {
   it("rejects invalid status transitions with 409", async () => {
     const requester = await createUser("invalid-transition-requester@example.test", UserRole.Requester);
     const reviewer = await createUser("invalid-transition-reviewer@example.test", UserRole.Admin);
+    const reviewerCookie = await login(reviewer.email);
     const submitted = await request(app)
       .post("/api/v1/requests")
       .set("Cookie", await login(requester.email))
@@ -236,7 +237,7 @@ describe("request routes", () => {
 
     const serverFields = await request(app)
       .patch(`/api/v1/requests/${submitted.body._id}`)
-      .set("Cookie", await login(reviewer.email))
+      .set("Cookie", reviewerCookie)
       .set("x-aegis-csrf", "1")
       .send({
         reviewer: reviewer._id.toString(),
@@ -249,12 +250,28 @@ describe("request routes", () => {
 
     const response = await request(app)
       .patch(`/api/v1/requests/${submitted.body._id}`)
-      .set("Cookie", await login(reviewer.email))
+      .set("Cookie", reviewerCookie)
       .set("x-aegis-csrf", "1")
       .send({ reviewer: reviewer._id.toString(), status: RequestStatus.Approved });
 
     expect(response.status).toBe(409);
     expect(response.body.code).toBe("INVALID_REQUEST_TRANSITION");
+
+    const missingId = new mongoose.Types.ObjectId().toString();
+    const invalidUpdate = await request(app)
+      .patch(`/api/v1/requests/${missingId}`)
+      .set("Cookie", reviewerCookie)
+      .set("x-aegis-csrf", "1")
+      .send({ status: "Unknown" });
+    expect(invalidUpdate.status).toBe(400);
+
+    const missingRequest = await request(app)
+      .patch(`/api/v1/requests/${missingId}`)
+      .set("Cookie", reviewerCookie)
+      .set("x-aegis-csrf", "1")
+      .send({ reviewer: reviewer._id.toString() });
+    expect(missingRequest.status).toBe(404);
+    expect(missingRequest.body.code).toBe("REQUEST_NOT_FOUND");
   });
 
   it("locks decided requests against further changes", async () => {
@@ -316,6 +333,7 @@ describe("request routes", () => {
     expect(unknownReviewer.status).toBe(404);
     expect(unknownReviewer.body.code).toBe("REVIEWER_NOT_FOUND");
   });
+
 
   it("updates linked tool approval and writes decision audit in the review transaction", async () => {
     const requester = await createUser("linked-requester@example.test", UserRole.Requester);
