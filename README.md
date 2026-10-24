@@ -53,6 +53,8 @@ Run scripts from the root using the API workspace:
   ```
 The API scripts require `MONGODB_URI`. Copy `.env.example` to `.env` and set the variable for your shell, or provide it directly in the environment before running them. The API server, authentication, Tool Registry, Requests, and Audit endpoints are implemented; start the current application UI with `npm run dev`.
 
+The seed script is disabled when `NODE_ENV=production`. Set `SEED_ADMIN_PASSWORD` in the local environment before seeding; it must be at least 12 characters. Only the initial Admin seed account receives this password, and the value must never be committed.
+
 ---
 
 ## Audit Integrity

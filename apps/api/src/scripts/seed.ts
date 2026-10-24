@@ -5,8 +5,7 @@
  *
  * Inserts:
  *  - 1  system user ("Automated Scanner / sentinel")
- *  - 4  human users  (Marcus Brody, Elena Rostova, Sarah Chen, Devon Reed,
- *                     Alex Vance → 5 human actors)
+ *  - 5  human users; the initial Admin account uses SEED_ADMIN_PASSWORD
  *  - 6  AI tools
  *  - 10 audit events (written through auditService so the chain is valid)
  *
@@ -14,6 +13,7 @@
  */
 
 import "dotenv/config";
+import argon2 from "argon2";
 import { connectDB, disconnectDB } from "../db/connection.js";
 import { User } from "../models/User.js";
 import { Tool } from "../models/Tool.js";
@@ -44,35 +44,30 @@ const SEED_USERS = [
     email: "marcus.b@acmecorp.com",
     department: "InfoSec & Governance",
     role: UserRole.Admin,
-    passwordHash: "SEED_PLACEHOLDER_NOT_USABLE",
   },
   {
     name: "Elena Rostova",
     email: "elena.r@acmecorp.com",
     department: "Legal & Compliance",
     role: UserRole.Compliance,
-    passwordHash: "SEED_PLACEHOLDER_NOT_USABLE",
   },
   {
     name: "Sarah Chen",
     email: "sarah.c@acmecorp.com",
     department: "Design Systems",
     role: UserRole.Requester,
-    passwordHash: "SEED_PLACEHOLDER_NOT_USABLE",
   },
   {
     name: "Devon Reed",
     email: "devon.r@acmecorp.com",
     department: "Data Science",
     role: UserRole.Requester,
-    passwordHash: "SEED_PLACEHOLDER_NOT_USABLE",
   },
   {
     name: "Alex Vance",
     email: "alex.v@acmecorp.com",
     department: "Chief Compliance Office",
     role: UserRole.Compliance,
-    passwordHash: "SEED_PLACEHOLDER_NOT_USABLE",
   },
 ] as const;
 
@@ -172,6 +167,14 @@ const SEED_TOOLS = [
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function seed() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("The seed script is disabled in production");
+  }
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (adminPassword == null || adminPassword.length < 12) {
+    throw new Error("SEED_ADMIN_PASSWORD must be set and contain at least 12 characters");
+  }
+
   await connectDB();
 
   console.log("⚠️  Clearing existing seed collections...");
@@ -185,15 +188,22 @@ async function seed() {
 
   // ── Users
   console.log("👤 Inserting users...");
-  const insertedUsers = await User.insertMany(SEED_USERS as unknown as object[]);
-  const userByEmail = new Map(
+  const seedUsers = await Promise.all(
+    SEED_USERS.map(async (user) =>
+      user.role === UserRole.Admin
+        ? { ...user, passwordHash: await argon2.hash(adminPassword, { type: argon2.argon2id }) }
+        : user
+    )
+  );
+  const insertedUsers = await User.insertMany(seedUsers);
+  const userByEmail = new Map<string, string>(
     insertedUsers.map((u) => [u.email, u._id.toString()])
   );
 
   // ── Tools
   console.log("🛠️  Inserting tools...");
   const insertedTools = await Tool.insertMany(SEED_TOOLS as unknown as object[]);
-  const toolByName = new Map(
+  const toolByName = new Map<string, string>(
     insertedTools.map((t) => [t.name, t._id.toString()])
   );
 
