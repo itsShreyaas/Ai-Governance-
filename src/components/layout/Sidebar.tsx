@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
+import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   Boxes,
@@ -14,8 +15,41 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { getAudit, getDashboard, getTools } from "../../api/client";
+import { UserRole, type UserRole as UserRoleType } from "@aegisai/shared";
 
-const navItems = [
+type NavPath =
+  | "/"
+  | "/tools"
+  | "/policy-matrix"
+  | "/risk-assessments"
+  | "/audit-log"
+  | "/employee-checker"
+  | "/settings";
+type CountKey = "tools" | "assessments" | "auditEvents";
+
+interface NavItem {
+  name: string;
+  path: NavPath;
+  icon: LucideIcon;
+  badgeColor?: "amber";
+}
+
+interface CountSnapshot {
+  role: UserRoleType;
+  counts: Partial<Record<CountKey, number>>;
+}
+
+interface CountError {
+  role: UserRoleType;
+  message: string;
+}
+
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const navItems: NavItem[] = [
   { name: "Overview", path: "/", icon: LayoutDashboard },
   { name: "Tool Registry", path: "/tools", icon: Boxes },
   { name: "Policy Matrix", path: "/policy-matrix", icon: FileSpreadsheet },
@@ -25,11 +59,11 @@ const navItems = [
   { name: "Settings", path: "/settings", icon: Settings },
 ];
 
-export const Sidebar = ({ isOpen, onClose }) => {
+export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { role } = useAuth();
-  const [countSnapshot, setCountSnapshot] = useState(null);
-  const [countError, setCountError] = useState(null);
-  const visibleItems = navItems.filter((item) => item.path !== "/settings" || role === "Admin");
+  const [countSnapshot, setCountSnapshot] = useState<CountSnapshot | null>(null);
+  const [countError, setCountError] = useState<CountError | null>(null);
+  const visibleItems = navItems.filter((item) => item.path !== "/settings" || role === UserRole.Admin);
   const liveCounts = countSnapshot?.role === role ? countSnapshot.counts : {};
   const liveCountError = countError?.role === role ? countError.message : "";
 
@@ -39,35 +73,42 @@ export const Sidebar = ({ isOpen, onClose }) => {
     const controller = new AbortController();
     const canReadTools = ["Admin", "Compliance", "Requester", "Auditor"].includes(role);
     const canReadGovernance = ["Admin", "Compliance", "Auditor"].includes(role);
-    const requests = [];
+    const requests: Promise<readonly [CountKey, number]>[] = [];
 
     if (canReadTools) {
       requests.push(
         getTools({ page: 1, limit: 1 }, { signal: controller.signal })
-          .then((result) => ["tools", result.total])
+          .then((result) => ["tools", result.total] as const)
       );
     }
     if (canReadGovernance) {
       requests.push(
         getDashboard({ signal: controller.signal })
-          .then((result) => ["assessments", result.kpis.openAssessments])
+          .then((result) => ["assessments", result.kpis.openAssessments] as const)
       );
       requests.push(
         getAudit({ page: 1, limit: 1 }, { signal: controller.signal })
-          .then((result) => ["auditEvents", result.total])
+          .then((result) => ["auditEvents", result.total] as const)
       );
     }
 
     Promise.all(requests)
       .then((entries) => {
         if (!controller.signal.aborted) {
-          setCountSnapshot({ role, counts: Object.fromEntries(entries) });
+          const counts = entries.reduce<Partial<Record<CountKey, number>>>(
+            (result, [key, count]) => ({ ...result, [key]: count }),
+            {}
+          );
+          setCountSnapshot({ role, counts });
           setCountError(null);
         }
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         if (!controller.signal.aborted) {
-          setCountError({ role, message: error.message || "Live counts are unavailable." });
+          setCountError({
+            role,
+            message: error instanceof Error ? error.message : "Live counts are unavailable.",
+          });
         }
       });
     return () => controller.abort();
@@ -128,11 +169,12 @@ export const Sidebar = ({ isOpen, onClose }) => {
             <nav className="space-y-1">
               {visibleItems.map((item) => {
                 const Icon = item.icon;
-                const badge = {
+                const badges: Partial<Record<NavPath, number | undefined>> = {
                   "/tools": liveCounts.tools,
                   "/risk-assessments": liveCounts.assessments,
                   "/audit-log": liveCounts.auditEvents,
-                }[item.path];
+                };
+                const badge = badges[item.path];
                 return (
                   <NavLink
                     key={item.path}

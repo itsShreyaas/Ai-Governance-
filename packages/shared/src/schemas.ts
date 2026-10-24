@@ -44,7 +44,14 @@ export function paginatedQuerySchema<
     .strict();
 }
 
-export const UserRoleSchema = z.enum(enumValues(UserRole));
+export const UserRoleSchema = z.enum([
+  UserRole.Admin,
+  UserRole.Compliance,
+  UserRole.Requester,
+  UserRole.Employee,
+  UserRole.Auditor,
+  UserRole.System,
+]);
 const ManageableUserRoleSchema = z.enum([
   UserRole.Admin,
   UserRole.Compliance,

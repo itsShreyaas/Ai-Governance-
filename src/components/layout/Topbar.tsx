@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -15,8 +15,23 @@ import {
 import { useTheme } from "../../context/useTheme";
 import { useAuth } from "../../context/useAuth";
 import { getDashboard, getTools } from "../../api/client";
+import type { DashboardResponse, ToolResponse, UserRole } from "@aegisai/shared";
 
-const routeTitles = {
+interface TopbarProps {
+  onOpenSidebar: () => void;
+}
+
+interface AlertSnapshot {
+  role: UserRole;
+  data: DashboardResponse;
+}
+
+interface AlertErrorSnapshot {
+  role: UserRole;
+  message: string;
+}
+
+const routeTitles: Record<string, string> = {
   "/": "Governance Overview",
   "/tools": "AI Tool Registry",
   "/policy-matrix": "Corporate Policy Matrix",
@@ -26,34 +41,38 @@ const routeTitles = {
   "/settings": "Governance Settings",
 };
 
-export const Topbar = ({ onOpenSidebar }) => {
+export const Topbar = ({ onOpenSidebar }: TopbarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<ToolResponse[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [logoutError, setLogoutError] = useState("");
-  const [alertSnapshot, setAlertSnapshot] = useState(null);
-  const [alertErrorSnapshot, setAlertErrorSnapshot] = useState(null);
+  const [alertSnapshot, setAlertSnapshot] = useState<AlertSnapshot | null>(null);
+  const [alertErrorSnapshot, setAlertErrorSnapshot] = useState<AlertErrorSnapshot | null>(null);
   const [alertsReloadVersion, setAlertsReloadVersion] = useState(0);
 
-  const notifRef = useRef(null);
-  const userRef = useRef(null);
-  const searchRef = useRef(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const userRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const currentTitle = routeTitles[location.pathname] || "Dashboard";
   const initials = user?.name?.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
-  const canSearchRegistry = ["Admin", "Compliance", "Requester", "Auditor"].includes(user?.role);
-  const canViewAlerts = ["Admin", "Compliance", "Auditor"].includes(user?.role);
-  const alertData = alertSnapshot?.role === user?.role ? alertSnapshot.data : null;
-  const alertError = alertErrorSnapshot?.role === user?.role ? alertErrorSnapshot.message : "";
+  const canSearchRegistry = ["Admin", "Compliance", "Requester", "Auditor"].includes(user?.role ?? "");
+  const canViewAlerts = ["Admin", "Compliance", "Auditor"].includes(user?.role ?? "");
+  const alertData =
+    alertSnapshot !== null && alertSnapshot.role === user?.role ? alertSnapshot.data : null;
+  const alertError =
+    alertErrorSnapshot !== null && alertErrorSnapshot.role === user?.role
+      ? alertErrorSnapshot.message
+      : "";
 
   useEffect(() => {
     const query = searchQuery.trim();
@@ -68,9 +87,9 @@ export const Topbar = ({ onOpenSidebar }) => {
             setSearchError("");
           }
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
           if (!controller.signal.aborted) {
-            setSearchError(error.message || "Tool search is unavailable.");
+            setSearchError(error instanceof Error ? error.message : "Tool search is unavailable.");
           }
         })
         .finally(() => {
@@ -84,7 +103,7 @@ export const Topbar = ({ onOpenSidebar }) => {
   }, [searchQuery, canSearchRegistry]);
 
   useEffect(() => {
-    if (!canViewAlerts) return undefined;
+    if (!canViewAlerts || user == null) return undefined;
 
     const controller = new AbortController();
     getDashboard({ signal: controller.signal })
@@ -94,33 +113,36 @@ export const Topbar = ({ onOpenSidebar }) => {
           setAlertErrorSnapshot(null);
         }
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         if (!controller.signal.aborted) {
-          setAlertErrorSnapshot({ role: user.role, message: error.message || "Governance alerts are unavailable." });
+          setAlertErrorSnapshot({
+            role: user.role,
+            message: error instanceof Error ? error.message : "Governance alerts are unavailable.",
+          });
         }
       });
     return () => controller.abort();
   }, [user?.role, canViewAlerts, alertsReloadVersion]);
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<void> => {
     setLogoutError("");
     try {
       await logout();
-    } catch (error) {
-      setLogoutError(error.message || "Unable to sign out. Please try again.");
+    } catch (error: unknown) {
+      setLogoutError(error instanceof Error ? error.message : "Unable to sign out. Please try again.");
     }
   };
 
   // Close popovers on click outside
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
+    const handleClickOutside = (e: globalThis.MouseEvent) => {
+      if (notifRef.current && e.target instanceof Node && !notifRef.current.contains(e.target)) {
         setShowNotifications(false);
       }
-      if (userRef.current && !userRef.current.contains(e.target)) {
+      if (userRef.current && e.target instanceof Node && !userRef.current.contains(e.target)) {
         setShowUserMenu(false);
       }
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
+      if (searchRef.current && e.target instanceof Node && !searchRef.current.contains(e.target)) {
         setShowSearchResults(false);
       }
     };
@@ -128,7 +150,7 @@ export const Topbar = ({ onOpenSidebar }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  function handleSearchChange(event) {
+  function handleSearchChange(event: ChangeEvent<HTMLInputElement>): void {
     const value = event.target.value;
     setSearchQuery(value);
     setSearchResults([]);
@@ -137,7 +159,7 @@ export const Topbar = ({ onOpenSidebar }) => {
     setShowSearchResults(Boolean(value.trim()));
   }
 
-  function submitSearch(event) {
+  function submitSearch(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const query = searchQuery.trim();
     if (!query) return;
@@ -219,7 +241,7 @@ export const Topbar = ({ onOpenSidebar }) => {
                 ) : (
                   <p className="px-3 py-4 text-xs text-[#717378] dark:text-[#8E9096]">No matching tools.</p>
                 )}
-                <button type="button" onClick={submitSearch} className="w-full border-t border-[#EAEAE6] px-3 py-2 text-left text-[11px] font-medium text-[#1B4D3E] hover:bg-neutral-50 dark:border-[#26282B] dark:text-emerald-400 dark:hover:bg-neutral-900/60">
+                <button type="button" onClick={openSearchResult} className="w-full border-t border-[#EAEAE6] px-3 py-2 text-left text-[11px] font-medium text-[#1B4D3E] hover:bg-neutral-50 dark:border-[#26282B] dark:text-emerald-400 dark:hover:bg-neutral-900/60">
                   View registry results
                 </button>
               </div>
@@ -235,7 +257,7 @@ export const Topbar = ({ onOpenSidebar }) => {
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4" />
-            {alertData?.toolsNeedingReview.length > 0 && (
+            {alertData !== null && alertData.toolsNeedingReview.length > 0 && (
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#1B4D3E] dark:bg-emerald-500" />
             )}
           </button>
