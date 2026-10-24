@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Boxes,
   ShieldCheck,
@@ -18,26 +18,34 @@ export const OverviewPage = () => {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reloadVersion, setReloadVersion] = useState(0);
 
-  const loadDashboard = useCallback(async () => {
-    try {
-      setDashboard(await getDashboard());
-    } catch (requestError: unknown) {
-      setError(requestError instanceof Error ? requestError.message : "Unable to load dashboard data.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const retryDashboard = () => {
+  const retryDashboard = (): void => {
     setLoading(true);
     setError("");
-    void loadDashboard();
+    setReloadVersion((version) => version + 1);
   };
 
   useEffect(() => {
-    void loadDashboard();
-  }, [loadDashboard]);
+    const controller = new AbortController();
+    getDashboard({ signal: controller.signal })
+      .then((nextDashboard) => {
+        if (!controller.signal.aborted) setDashboard(nextDashboard);
+      })
+      .catch((requestError: unknown) => {
+        if (!controller.signal.aborted) {
+          setError(
+            requestError instanceof Error
+              ? requestError.message
+              : "Unable to load dashboard data."
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [reloadVersion]);
 
   if (loading || dashboard === null) {
     return (

@@ -80,7 +80,6 @@ export const AuditLogPage = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoadError("");
     getAudit({ ...filters, page, limit: PAGE_SIZE }, { signal: controller.signal })
       .then((nextResult) => setResult(nextResult))
       .catch((error: unknown) => {
@@ -106,6 +105,7 @@ export const AuditLogPage = () => {
     event.preventDefault();
     setPage(1);
     setLoading(true);
+    setLoadError("");
     setFilters({
       ...(draftFilters.eventType ? { eventType: draftFilters.eventType } : {}),
       ...(draftFilters.toolId ? { toolId: draftFilters.toolId.trim() } : {}),
@@ -120,6 +120,7 @@ export const AuditLogPage = () => {
     setFilters({});
     setPage(1);
     setLoading(true);
+    setLoadError("");
   }
 
   async function exportCsv() {
@@ -157,6 +158,7 @@ export const AuditLogPage = () => {
 
   function retryLoad(): void {
     setLoading(true);
+    setLoadError("");
     setReloadVersion((version) => version + 1);
   }
 

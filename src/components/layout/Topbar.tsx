@@ -66,7 +66,8 @@ export const Topbar = ({ onOpenSidebar }: TopbarProps) => {
   const currentTitle = routeTitles[location.pathname] || "Dashboard";
   const initials = user?.name?.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
   const canSearchRegistry = ["Admin", "Compliance", "Requester", "Auditor"].includes(user?.role ?? "");
-  const canViewAlerts = ["Admin", "Compliance", "Auditor"].includes(user?.role ?? "");
+  const alertRole = user?.role;
+  const canViewAlerts = ["Admin", "Compliance", "Auditor"].includes(alertRole ?? "");
   const alertData =
     alertSnapshot !== null && alertSnapshot.role === user?.role ? alertSnapshot.data : null;
   const alertError =
@@ -103,26 +104,26 @@ export const Topbar = ({ onOpenSidebar }: TopbarProps) => {
   }, [searchQuery, canSearchRegistry]);
 
   useEffect(() => {
-    if (!canViewAlerts || user == null) return undefined;
+    if (!canViewAlerts || alertRole == null) return undefined;
 
     const controller = new AbortController();
     getDashboard({ signal: controller.signal })
       .then((data) => {
         if (!controller.signal.aborted) {
-          setAlertSnapshot({ role: user.role, data });
+          setAlertSnapshot({ role: alertRole, data });
           setAlertErrorSnapshot(null);
         }
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
           setAlertErrorSnapshot({
-            role: user.role,
+            role: alertRole,
             message: error instanceof Error ? error.message : "Governance alerts are unavailable.",
           });
         }
       });
     return () => controller.abort();
-  }, [user?.role, canViewAlerts, alertsReloadVersion]);
+  }, [alertRole, canViewAlerts, alertsReloadVersion]);
 
   const handleLogout = async (): Promise<void> => {
     setLogoutError("");

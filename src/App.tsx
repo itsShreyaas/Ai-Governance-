@@ -1,17 +1,35 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import type { UserRole } from "@aegisai/shared";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { useAuth } from "./context/useAuth";
 import { AppLayout } from "./components/layout/AppLayout";
-import { OverviewPage } from "./pages/OverviewPage";
-import { LoginPage } from "./pages/LoginPage";
-import { ToolRegistryPage } from "./pages/ToolRegistryPage";
-import { PolicyMatrixPage } from "./pages/PolicyMatrixPage";
-import { RiskAssessmentsPage } from "./pages/RiskAssessmentsPage";
-import { AuditLogPage } from "./pages/AuditLogPage";
-import { EmployeeCheckerPage } from "./pages/EmployeeCheckerPage";
-import { SettingsPage } from "./pages/SettingsPage";
+
+const OverviewPage = lazy(() =>
+  import("./pages/OverviewPage").then((module) => ({ default: module.OverviewPage }))
+);
+const LoginPage = lazy(() =>
+  import("./pages/LoginPage").then((module) => ({ default: module.LoginPage }))
+);
+const ToolRegistryPage = lazy(() =>
+  import("./pages/ToolRegistryPage").then((module) => ({ default: module.ToolRegistryPage }))
+);
+const PolicyMatrixPage = lazy(() =>
+  import("./pages/PolicyMatrixPage").then((module) => ({ default: module.PolicyMatrixPage }))
+);
+const RiskAssessmentsPage = lazy(() =>
+  import("./pages/RiskAssessmentsPage").then((module) => ({ default: module.RiskAssessmentsPage }))
+);
+const AuditLogPage = lazy(() =>
+  import("./pages/AuditLogPage").then((module) => ({ default: module.AuditLogPage }))
+);
+const EmployeeCheckerPage = lazy(() =>
+  import("./pages/EmployeeCheckerPage").then((module) => ({ default: module.EmployeeCheckerPage }))
+);
+const SettingsPage = lazy(() =>
+  import("./pages/SettingsPage").then((module) => ({ default: module.SettingsPage }))
+);
 
 interface RequireAuthProps {
   role?: UserRole;
@@ -53,6 +71,7 @@ export default function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
+          <Suspense fallback={<div role="status" aria-label="Loading page" className="min-h-screen bg-[#FBFBFA] dark:bg-[#111213]" />}>
           <Routes>
             <Route path="login" element={<LoginPage />} />
             <Route element={<RequireAuth />}>
@@ -70,6 +89,7 @@ export default function App() {
               </Route>
             </Route>
           </Routes>
+          </Suspense>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

@@ -32,15 +32,33 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   }, [loadUser]);
 
   useEffect(() => {
+    const controller = new AbortController();
     const handleAuthFailure = () => {
       setUser(null);
       setAuthError(null);
       setLoading(false);
     };
     window.addEventListener("aegis:auth-failed", handleAuthFailure);
-    void loadUser();
-    return () => window.removeEventListener("aegis:auth-failed", handleAuthFailure);
-  }, [loadUser]);
+    api.getMe()
+      .then((loadedUser) => {
+        if (!controller.signal.aborted) setUser(loadedUser);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        if (error instanceof ApiError && error.status === 401) {
+          setUser(null);
+        } else {
+          setAuthError(error);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => {
+      controller.abort();
+      window.removeEventListener("aegis:auth-failed", handleAuthFailure);
+    };
+  }, []);
 
   const signIn = useCallback(async (credentials: LoginInput): Promise<AuthUser> => {
     const signedInUser = await api.login(credentials);

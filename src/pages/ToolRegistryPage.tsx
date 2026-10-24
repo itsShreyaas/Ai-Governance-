@@ -142,7 +142,6 @@ export const ToolRegistryPage = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoadError("");
     const filters: Partial<ToolListQuery> = {
       page,
       limit: PAGE_SIZE,
@@ -178,6 +177,7 @@ export const ToolRegistryPage = () => {
     setter(value);
     setPage(1);
     setLoading(true);
+    setLoadError("");
   }
 
   function updateSearch(value: string): void {
@@ -187,6 +187,7 @@ export const ToolRegistryPage = () => {
     setSearchParams(nextParams, { replace: true });
     setPage(1);
     setLoading(true);
+    setLoadError("");
   }
 
   function updateForm(
@@ -250,6 +251,7 @@ export const ToolRegistryPage = () => {
 
   function retryLoad(): void {
     setLoading(true);
+    setLoadError("");
     setReloadVersion((version) => version + 1);
   }
 
