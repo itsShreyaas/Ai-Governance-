@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { LoginSchema } from "@aegisai/shared";
 import { ApiError } from "../api/client";
@@ -12,7 +12,7 @@ export const LoginPage = () => {
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"email" | "password", string>>>({});
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -23,15 +23,17 @@ export const LoginPage = () => {
     return <Navigate to="/" replace />;
   }
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     setFormError("");
     const result = LoginSchema.safeParse({ email, password });
     if (!result.success) {
-      const errors = {};
+      const errors: Partial<Record<"email" | "password", string>> = {};
       for (const issue of result.error.issues) {
         const field = issue.path[0];
-        if (field && !errors[field]) errors[field] = issue.message;
+        if ((field === "email" || field === "password") && !errors[field]) {
+          errors[field] = issue.message;
+        }
       }
       setFieldErrors(errors);
       return;
@@ -41,15 +43,25 @@ export const LoginPage = () => {
     setSubmitting(true);
     try {
       await login(result.data);
-      const destination = location.state?.from?.pathname || "/";
+      const locationState: unknown = location.state;
+      const from =
+        typeof locationState === "object" && locationState !== null && "from" in locationState
+          ? locationState.from
+          : null;
+      const pathname =
+        typeof from === "object" && from !== null && "pathname" in from &&
+        typeof from.pathname === "string"
+          ? from.pathname
+          : "/";
+      const destination = pathname || "/";
       navigate(destination === "/login" ? "/" : destination, { replace: true });
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof ApiError && (error.status === 429 || error.code === "RATE_LIMITED")) {
         setFormError("There have been too many sign-in attempts. Please wait a few minutes and try again.");
       } else if (error instanceof ApiError && error.status === 401) {
         setFormError("Sign-in failed. Check your email and password, or wait 15 minutes if repeated attempts temporarily locked your account.");
       } else {
-        setFormError(error.message || "Unable to sign in right now. Please try again.");
+        setFormError(error instanceof Error ? error.message : "Unable to sign in right now. Please try again.");
       }
     } finally {
       setSubmitting(false);

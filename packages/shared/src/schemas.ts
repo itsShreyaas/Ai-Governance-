@@ -177,6 +177,7 @@ export const ToolResponseSchema = z
     archivedAt: z.coerce.date().nullable().optional(),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date(),
+    __v: z.number().optional(),
   })
   .strict();
 

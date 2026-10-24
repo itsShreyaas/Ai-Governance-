@@ -1,4 +1,3 @@
-import React from "react";
 import { FileSpreadsheet } from "lucide-react";
 import { PagePlaceholder } from "../components/common/PagePlaceholder";
 

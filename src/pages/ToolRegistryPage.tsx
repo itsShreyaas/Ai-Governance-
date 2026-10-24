@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type Dispatch, type FormEvent, type SetStateAction } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
@@ -10,12 +10,64 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { ApprovalStatus, CreateToolSchema, DataSensitivity, RiskLevel, UserRole } from "@aegisai/shared";
+import {
+  ApprovalStatus,
+  CreateToolSchema,
+  DataSensitivity,
+  RiskLevel,
+  UserRole,
+  type ToolListQuery,
+  type ToolResponse,
+  type ApprovalStatus as ApprovalStatusType,
+  type RiskLevel as RiskLevelType,
+} from "@aegisai/shared";
 import { ApiError, createTool, getTools } from "../api/client";
 import { useAuth } from "../context/useAuth";
+import type { PaginatedResponse } from "@aegisai/shared";
 
 const PAGE_SIZE = 12;
-const emptyForm = {
+type ToolForm = {
+  name: string;
+  vendor: string;
+  category: string;
+  description: string;
+  ownerDepartment: string;
+  dataSensitivity: (typeof DataSensitivity)[keyof typeof DataSensitivity];
+  userCount: string;
+  personalData: boolean;
+};
+type ToolFormField = keyof ToolForm;
+type ToolTextField = Exclude<ToolFormField, "personalData">;
+function isToolFormField(field: string): field is ToolFormField {
+  return [
+    "name",
+    "vendor",
+    "category",
+    "description",
+    "ownerDepartment",
+    "dataSensitivity",
+    "userCount",
+    "personalData",
+  ].includes(field);
+}
+
+function isToolTextField(field: string): field is ToolTextField {
+  return [
+    "name",
+    "vendor",
+    "category",
+    "description",
+    "ownerDepartment",
+    "dataSensitivity",
+    "userCount",
+  ].includes(field);
+}
+
+function enumFilter<T extends string>(values: readonly T[], candidate: string): T | "" {
+  return values.find((value) => value === candidate) ?? "";
+}
+
+const emptyForm: ToolForm = {
   name: "",
   vendor: "",
   category: "",
@@ -26,7 +78,7 @@ const emptyForm = {
   personalData: false,
 };
 
-function statusClasses(status) {
+function statusClasses(status: ToolResponse["approvalStatus"]): string {
   if (status === ApprovalStatus.Approved) {
     return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300";
   }
@@ -36,8 +88,10 @@ function statusClasses(status) {
   return "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300";
 }
 
-function errorMessage(error, action = "load") {
-  if (!(error instanceof ApiError)) return error.message || "Unable to complete the request.";
+function errorMessage(error: unknown, action: "load" | "register" = "load"): string {
+  if (!(error instanceof ApiError)) {
+    return error instanceof Error ? error.message : "Unable to complete the request.";
+  }
   if (error.status === 401) return "Your session has expired. Sign in again to continue.";
   if (error.status === 403) {
     return action === "register"
@@ -51,7 +105,12 @@ function errorMessage(error, action = "load") {
   return error.message;
 }
 
-function FieldError({ id, errors }) {
+interface FieldErrorProps {
+  id: ToolFormField;
+  errors: Partial<Record<ToolFormField, string>>;
+}
+
+function FieldError({ id, errors }: FieldErrorProps) {
   if (!errors[id]) return null;
   return <p id={`${id}-error`} className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">{errors[id]}</p>;
 }
@@ -62,33 +121,39 @@ export const ToolRegistryPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get("search") ?? "";
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState("");
-  const [risk, setRisk] = useState("");
+  const [status, setStatus] = useState<ApprovalStatusType | "">("");
+  const [risk, setRisk] = useState<RiskLevelType | "">("");
   const [department, setDepartment] = useState("");
-  const [result, setResult] = useState({ data: [], total: 0, page: 1, limit: PAGE_SIZE });
+  const [result, setResult] = useState<PaginatedResponse<ToolResponse>>({
+    data: [],
+    total: 0,
+    page: 1,
+    limit: PAGE_SIZE,
+  });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [reloadVersion, setReloadVersion] = useState(0);
-  const [selectedTool, setSelectedTool] = useState(null);
+  const [selectedTool, setSelectedTool] = useState<ToolResponse | null>(null);
   const [registerOpen, setRegisterOpen] = useState(false);
-  const [form, setForm] = useState(emptyForm);
-  const [fieldErrors, setFieldErrors] = useState({});
+  const [form, setForm] = useState<ToolForm>(emptyForm);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<ToolFormField, string>>>({});
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
     setLoadError("");
-    getTools({
+    const filters: Partial<ToolListQuery> = {
       page,
       limit: PAGE_SIZE,
       search,
-      approvalStatus: status,
-      riskLevel: risk,
-      ownerDepartment: department,
-    }, { signal: controller.signal })
+      ...(status ? { approvalStatus: status } : {}),
+      ...(risk ? { riskLevel: risk } : {}),
+      ...(department ? { ownerDepartment: department } : {}),
+    };
+    getTools(filters, { signal: controller.signal })
       .then((nextResult) => setResult(nextResult))
-      .catch((error) => {
+      .catch((error: unknown) => {
         if (!controller.signal.aborted) setLoadError(errorMessage(error));
       })
       .finally(() => {
@@ -106,13 +171,16 @@ export const ToolRegistryPage = () => {
     [search, status, risk, department]
   );
 
-  function updateFilter(setter, value) {
+  function updateFilter<T extends string>(
+    setter: Dispatch<SetStateAction<T>>,
+    value: T
+  ): void {
     setter(value);
     setPage(1);
     setLoading(true);
   }
 
-  function updateSearch(value) {
+  function updateSearch(value: string): void {
     const nextParams = new URLSearchParams(searchParams);
     if (value) nextParams.set("search", value);
     else nextParams.delete("search");
@@ -121,14 +189,29 @@ export const ToolRegistryPage = () => {
     setLoading(true);
   }
 
-  function updateForm(event) {
-    const { name, value, type, checked } = event.target;
-    setForm((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
-    setFieldErrors((current) => ({ ...current, [name]: undefined }));
+  function updateForm(
+    event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ): void {
+    const { name, value } = event.currentTarget;
+    if (name === "personalData" && event.currentTarget instanceof HTMLInputElement) {
+      const checked = event.currentTarget.checked;
+      setForm((current) => ({ ...current, personalData: checked }));
+    } else if (isToolTextField(name)) {
+      setForm((current) => ({ ...current, [name]: value }));
+    } else {
+      return;
+    }
+    if (isToolFormField(name)) {
+      setFieldErrors((current) => {
+        const next = { ...current };
+        delete next[name];
+        return next;
+      });
+    }
     setFormError("");
   }
 
-  async function submitRegistration(event) {
+  async function submitRegistration(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     const candidate = {
       ...form,
@@ -136,10 +219,12 @@ export const ToolRegistryPage = () => {
     };
     const parsed = CreateToolSchema.safeParse(candidate);
     if (!parsed.success) {
-      const nextErrors = {};
+      const nextErrors: Partial<Record<ToolFormField, string>> = {};
       for (const issue of parsed.error.issues) {
         const field = issue.path[0];
-        if (typeof field === "string" && nextErrors[field] == null) nextErrors[field] = issue.message;
+        if (typeof field === "string" && isToolFormField(field) && nextErrors[field] == null) {
+          nextErrors[field] = issue.message;
+        }
       }
       setFieldErrors(nextErrors);
       setFormError("Please correct the highlighted fields.");
@@ -156,14 +241,14 @@ export const ToolRegistryPage = () => {
       setPage(1);
       setLoading(true);
       setReloadVersion((version) => version + 1);
-    } catch (error) {
+    } catch (error: unknown) {
       setFormError(errorMessage(error, "register"));
     } finally {
       setSubmitting(false);
     }
   }
 
-  function retryLoad() {
+  function retryLoad(): void {
     setLoading(true);
     setReloadVersion((version) => version + 1);
   }
@@ -217,7 +302,10 @@ export const ToolRegistryPage = () => {
             <span className="sr-only">Filter by approval status</span>
             <select
               value={status}
-              onChange={(event) => updateFilter(setStatus, event.target.value)}
+              onChange={(event) => updateFilter(
+                setStatus,
+                enumFilter(Object.values(ApprovalStatus), event.target.value)
+              )}
               className="w-full rounded-lg border border-[#E4E4E0] bg-neutral-50 px-3 py-2 text-xs text-[#18191B] focus:outline-hidden focus:ring-1 focus:ring-[#1B4D3E] dark:border-[#2C2E32] dark:bg-neutral-900 dark:text-[#EDEDED]"
             >
               <option value="">All statuses</option>
@@ -228,7 +316,10 @@ export const ToolRegistryPage = () => {
             <span className="sr-only">Filter by risk level</span>
             <select
               value={risk}
-              onChange={(event) => updateFilter(setRisk, event.target.value)}
+              onChange={(event) => updateFilter(
+                setRisk,
+                enumFilter(Object.values(RiskLevel), event.target.value)
+              )}
               className="w-full rounded-lg border border-[#E4E4E0] bg-neutral-50 px-3 py-2 text-xs text-[#18191B] focus:outline-hidden focus:ring-1 focus:ring-[#1B4D3E] dark:border-[#2C2E32] dark:bg-neutral-900 dark:text-[#EDEDED]"
             >
               <option value="">All risk levels</option>
@@ -388,12 +479,12 @@ export const ToolRegistryPage = () => {
             <form onSubmit={submitRegistration} noValidate className="space-y-4">
               {formError && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:bg-rose-950/30 dark:text-rose-300">{formError}</p>}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {[
+                {([
                   ["name", "Tool name"],
                   ["vendor", "Vendor"],
                   ["category", "Category"],
                   ["ownerDepartment", "Owner department"],
-                ].map(([field, label]) => (
+                ] as const).map(([field, label]) => (
                   <label key={field} className="block text-xs font-medium text-[#444] dark:text-[#BBB]">
                     {label}
                     <input

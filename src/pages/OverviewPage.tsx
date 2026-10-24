@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Boxes,
   ShieldCheck,
@@ -12,17 +12,18 @@ import { StatusChart } from "../components/dashboard/StatusChart";
 import { RiskChart } from "../components/dashboard/RiskChart";
 import { RecentActivity } from "../components/dashboard/RecentActivity";
 import { PendingReviewList } from "../components/dashboard/PendingReviewList";
+import type { DashboardResponse } from "@aegisai/shared";
 
 export const OverviewPage = () => {
-  const [dashboard, setDashboard] = useState(null);
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const loadDashboard = useCallback(async () => {
     try {
       setDashboard(await getDashboard());
-    } catch (requestError) {
-      setError(requestError.message || "Unable to load dashboard data.");
+    } catch (requestError: unknown) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to load dashboard data.");
     } finally {
       setLoading(false);
     }
@@ -38,7 +39,7 @@ export const OverviewPage = () => {
     void loadDashboard();
   }, [loadDashboard]);
 
-  if (loading) {
+  if (loading || dashboard === null) {
     return (
       <div className="space-y-6" aria-label="Loading dashboard">
         <div className="h-16 animate-pulse rounded-xl bg-neutral-200/70 dark:bg-neutral-800" />

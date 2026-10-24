@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import {
   AlertCircle,
   BadgeCheck,
@@ -8,14 +8,33 @@ import {
   LoaderCircle,
   ShieldCheck,
 } from "lucide-react";
-import { AuditEventType, UserRole } from "@aegisai/shared";
+import {
+  AuditEventType,
+  UserRole,
+  type AuditEventListItem,
+  type AuditListQuery,
+  type AuditVerificationResponse,
+  type PaginatedResponse,
+} from "@aegisai/shared";
 import { ApiError, getAudit, getAuditExport, verifyAuditChain } from "../api/client";
 import { useAuth } from "../context/useAuth";
 
 const PAGE_SIZE = 20;
-const emptyFilters = { eventType: "", toolId: "", actor: "", from: "", to: "" };
+interface AuditDraftFilters {
+  eventType: string;
+  toolId: string;
+  actor: string;
+  from: string;
+  to: string;
+}
+type AuditFilters = Omit<Partial<AuditListQuery>, "from" | "to"> & {
+  from?: Date | string;
+  to?: Date | string;
+};
 
-function auditErrorMessage(error) {
+const emptyFilters: AuditDraftFilters = { eventType: "", toolId: "", actor: "", from: "", to: "" };
+
+function auditErrorMessage(error: unknown): string {
   if (error instanceof ApiError && error.status === 401) {
     return "Your session has expired. Sign in again to continue.";
   }
@@ -25,15 +44,15 @@ function auditErrorMessage(error) {
   if (error instanceof ApiError && error.status === 400) {
     return "One or more filters are invalid. Check the IDs and date range.";
   }
-  return error.message || "The audit request could not be completed.";
+  return error instanceof Error ? error.message : "The audit request could not be completed.";
 }
 
-function formatTimestamp(value) {
+function formatTimestamp(value: Date | string): string {
   const timestamp = new Date(value);
   return Number.isNaN(timestamp.getTime()) ? "Invalid timestamp" : timestamp.toLocaleString();
 }
 
-function dateBoundary(value, endOfDay = false) {
+function dateBoundary(value: string, endOfDay = false): string {
   if (!value) return "";
   return `${value}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}Z`;
 }
@@ -42,16 +61,21 @@ export const AuditLogPage = () => {
   const { role } = useAuth();
   const canVerify = role === UserRole.Admin || role === UserRole.Auditor;
   const [page, setPage] = useState(1);
-  const [draftFilters, setDraftFilters] = useState(emptyFilters);
-  const [filters, setFilters] = useState({});
-  const [result, setResult] = useState({ data: [], total: 0, page: 1, limit: PAGE_SIZE });
+  const [draftFilters, setDraftFilters] = useState<AuditDraftFilters>(emptyFilters);
+  const [filters, setFilters] = useState<AuditFilters>({});
+  const [result, setResult] = useState<PaginatedResponse<AuditEventListItem>>({
+    data: [],
+    total: 0,
+    page: 1,
+    limit: PAGE_SIZE,
+  });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [reloadVersion, setReloadVersion] = useState(0);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
   const [verifying, setVerifying] = useState(false);
-  const [verification, setVerification] = useState(null);
+  const [verification, setVerification] = useState<AuditVerificationResponse | null>(null);
   const [verificationError, setVerificationError] = useState("");
 
   useEffect(() => {
@@ -59,7 +83,7 @@ export const AuditLogPage = () => {
     setLoadError("");
     getAudit({ ...filters, page, limit: PAGE_SIZE }, { signal: controller.signal })
       .then((nextResult) => setResult(nextResult))
-      .catch((error) => {
+      .catch((error: unknown) => {
         if (!controller.signal.aborted) setLoadError(auditErrorMessage(error));
       })
       .finally(() => {
@@ -73,12 +97,12 @@ export const AuditLogPage = () => {
   const visibleEnd = Math.min(page * PAGE_SIZE, result.total);
   const hasFilters = useMemo(() => Object.values(filters).some(Boolean), [filters]);
 
-  function updateDraft(event) {
+  function updateDraft(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>): void {
     const { name, value } = event.target;
     setDraftFilters((current) => ({ ...current, [name]: value }));
   }
 
-  function applyFilters(event) {
+  function applyFilters(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     setPage(1);
     setLoading(true);
@@ -111,7 +135,7 @@ export const AuditLogPage = () => {
       link.click();
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
-    } catch (error) {
+    } catch (error: unknown) {
       setExportError(auditErrorMessage(error));
     } finally {
       setExporting(false);
@@ -124,14 +148,14 @@ export const AuditLogPage = () => {
     setVerification(null);
     try {
       setVerification(await verifyAuditChain());
-    } catch (error) {
+    } catch (error: unknown) {
       setVerificationError(auditErrorMessage(error));
     } finally {
       setVerifying(false);
     }
   }
 
-  function retryLoad() {
+  function retryLoad(): void {
     setLoading(true);
     setReloadVersion((version) => version + 1);
   }
