@@ -1,9 +1,30 @@
-import React from "react";
+import type { DashboardResponse } from "@aegisai/shared";
+import type { TooltipContentProps } from "recharts";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 
-const CustomTooltip = ({ active, payload }) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
+type StatusChartData = DashboardResponse["statusChartData"][number];
+
+interface StatusChartProps {
+  data: DashboardResponse["statusChartData"];
+  totalTools: number;
+}
+
+function isStatusChartData(value: unknown): value is StatusChartData {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "name" in value &&
+    typeof value.name === "string" &&
+    "value" in value &&
+    typeof value.value === "number" &&
+    "color" in value &&
+    typeof value.color === "string"
+  );
+}
+
+const CustomTooltip = ({ active, payload }: TooltipContentProps) => {
+  const data: unknown = payload[0]?.payload;
+  if (active && isStatusChartData(data)) {
     return (
       <div className="bg-white dark:bg-[#1A1C1E] border border-[#E4E4E0] dark:border-[#2C2E32] rounded-lg shadow-lg px-3 py-2 text-xs">
         <div className="font-semibold text-[#18191B] dark:text-[#EDEDED] flex items-center gap-1.5">
@@ -22,7 +43,7 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
-export const StatusChart = ({ data, totalTools }) => {
+export const StatusChart = ({ data, totalTools }: StatusChartProps) => {
   return (
     <div className="bg-white dark:bg-[#18191B] border border-[#E8E8E4] dark:border-[#27282B] rounded-xl p-5 shadow-xs flex flex-col justify-between">
       <div>
@@ -42,7 +63,7 @@ export const StatusChart = ({ data, totalTools }) => {
       <div className="relative h-48 my-2">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={CustomTooltip} />
             <Pie
               data={data}
               cx="50%"

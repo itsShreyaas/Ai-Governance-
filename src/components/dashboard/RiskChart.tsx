@@ -1,4 +1,5 @@
-import React from "react";
+import type { DashboardResponse } from "@aegisai/shared";
+import type { TooltipContentProps } from "recharts";
 import {
   ResponsiveContainer,
   BarChart,
@@ -9,9 +10,31 @@ import {
   Cell,
 } from "recharts";
 
-const CustomBarTooltip = ({ active, payload }) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
+type RiskChartData = DashboardResponse["riskChartData"][number];
+
+interface RiskChartProps {
+  data: DashboardResponse["riskChartData"];
+  totalTools: number;
+}
+
+function isRiskChartData(value: unknown): value is RiskChartData {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "level" in value &&
+    typeof value.level === "string" &&
+    "count" in value &&
+    typeof value.count === "number" &&
+    "percentage" in value &&
+    typeof value.percentage === "number" &&
+    "fill" in value &&
+    typeof value.fill === "string"
+  );
+}
+
+const CustomBarTooltip = ({ active, payload }: TooltipContentProps) => {
+  const data: unknown = payload[0]?.payload;
+  if (active && isRiskChartData(data)) {
     return (
       <div className="bg-white dark:bg-[#1A1C1E] border border-[#E4E4E0] dark:border-[#2C2E32] rounded-lg shadow-lg px-3 py-2 text-xs">
         <div className="font-semibold text-[#18191B] dark:text-[#EDEDED] flex items-center gap-1.5">
@@ -30,7 +53,7 @@ const CustomBarTooltip = ({ active, payload }) => {
   return null;
 };
 
-export const RiskChart = ({ data, totalTools }) => {
+export const RiskChart = ({ data, totalTools }: RiskChartProps) => {
   return (
     <div className="bg-white dark:bg-[#18191B] border border-[#E8E8E4] dark:border-[#27282B] rounded-xl p-5 shadow-xs flex flex-col justify-between">
       <div>
@@ -65,7 +88,7 @@ export const RiskChart = ({ data, totalTools }) => {
               allowDecimals={false}
               tick={{ fontSize: 10, fill: "#8A8C92" }}
             />
-            <Tooltip content={<CustomBarTooltip />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
+            <Tooltip content={CustomBarTooltip} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
             <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={36}>
               {data.map((entry, index) => (
                 <Cell key={`bar-${index}`} fill={entry.fill} />

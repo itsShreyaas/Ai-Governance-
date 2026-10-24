@@ -1,9 +1,13 @@
-import React from "react";
+import type { DashboardResponse } from "@aegisai/shared";
 import { Link } from "react-router-dom";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 
-export const PendingReviewList = ({ tools }) => {
-  const getRiskBadge = (risk) => {
+interface PendingReviewListProps {
+  tools: DashboardResponse["toolsNeedingReview"];
+}
+
+export const PendingReviewList = ({ tools }: PendingReviewListProps) => {
+  const getRiskBadge = (risk: string | null) => {
     switch (risk) {
       case "High":
         return "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800";
@@ -16,12 +20,12 @@ export const PendingReviewList = ({ tools }) => {
     }
   };
 
-  const formatDate = (value) => {
+  const formatDate = (value: Date) => {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? "Date unavailable" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(date);
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "Approved":
         return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";

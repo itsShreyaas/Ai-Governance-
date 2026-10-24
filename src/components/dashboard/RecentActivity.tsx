@@ -1,4 +1,4 @@
-import React from "react";
+import type { DashboardResponse } from "@aegisai/shared";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -8,8 +8,12 @@ import {
   Info,
 } from "lucide-react";
 
-export const RecentActivity = ({ events }) => {
-  const getSeverityBadge = (severity) => {
+interface RecentActivityProps {
+  events: DashboardResponse["recentAudits"];
+}
+
+export const RecentActivity = ({ events }: RecentActivityProps) => {
+  const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case "critical":
         return {
@@ -38,7 +42,7 @@ export const RecentActivity = ({ events }) => {
     }
   };
 
-  const formatTimestamp = (value) => {
+  const formatTimestamp = (value: Date) => {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? "Unknown time" : new Intl.DateTimeFormat(undefined, {
       dateStyle: "medium",

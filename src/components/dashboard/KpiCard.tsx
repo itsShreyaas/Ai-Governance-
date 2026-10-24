@@ -1,4 +1,26 @@
-import React from "react";
+import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
+
+type BadgeVariant = "default" | "forest" | "emerald" | "amber" | "rose" | "neutral";
+
+interface KpiCardProps {
+  title: ReactNode;
+  value: ReactNode;
+  subtitle?: ReactNode;
+  badgeText?: string | undefined;
+  badgeVariant?: BadgeVariant;
+  icon?: LucideIcon | undefined;
+  trend?: ReactNode;
+}
+
+const badgeClasses: Record<BadgeVariant, string> = {
+  default: "bg-neutral-100 text-[#555] dark:bg-neutral-800 dark:text-[#AAA]",
+  forest: "bg-[#1B4D3E]/10 text-[#1B4D3E] dark:bg-emerald-500/15 dark:text-emerald-400 border border-[#1B4D3E]/20 dark:border-emerald-500/30",
+  emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
+  amber: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800",
+  rose: "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800",
+  neutral: "bg-neutral-100 text-[#555] dark:bg-neutral-800 dark:text-[#AAA] border border-neutral-200 dark:border-neutral-700",
+};
 
 export const KpiCard = ({
   title,
@@ -8,14 +30,7 @@ export const KpiCard = ({
   badgeVariant = "default",
   icon: Icon,
   trend,
-}) => {
-  const badgeClasses = {
-    forest: "bg-[#1B4D3E]/10 text-[#1B4D3E] dark:bg-emerald-500/15 dark:text-emerald-400 border border-[#1B4D3E]/20 dark:border-emerald-500/30",
-    emerald: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800",
-    amber: "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800",
-    rose: "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border border-rose-200 dark:border-rose-800",
-    neutral: "bg-neutral-100 text-[#555] dark:bg-neutral-800 dark:text-[#AAA] border border-neutral-200 dark:border-neutral-700",
-  }[badgeVariant] || "bg-neutral-100 text-[#555] dark:bg-neutral-800 dark:text-[#AAA]";
+}: KpiCardProps) => {
 
   return (
     <div className="bg-white dark:bg-[#18191B] border border-[#E8E8E4] dark:border-[#27282B] rounded-xl p-4 md:p-5 shadow-xs hover:border-[#D0D0CB] dark:hover:border-[#383A3E] transition-all duration-150">
@@ -35,7 +50,7 @@ export const KpiCard = ({
           {value}
         </div>
         {badgeText && (
-          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${badgeClasses}`}>
+          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${badgeClasses[badgeVariant]}`}>
             {badgeText}
           </span>
         )}

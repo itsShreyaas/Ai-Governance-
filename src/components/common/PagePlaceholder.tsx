@@ -1,13 +1,20 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Layers, ShieldCheck } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+interface PagePlaceholderProps {
+  title: string;
+  description: string;
+  badge?: string;
+  icon?: LucideIcon;
+}
 
 export const PagePlaceholder = ({
   title,
   description,
   badge = "Stage 2 Scheduled",
   icon: Icon = Layers,
-}) => {
+}: PagePlaceholderProps) => {
   return (
     <div className="space-y-6">
       {/* Header bar */}
