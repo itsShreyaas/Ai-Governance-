@@ -4,7 +4,7 @@ Enterprise AI Tool Governance, Policy Enforcement, and Risk Assessment Platform.
 
 ## Monorepo Architecture
 
-- **`src/`**: React 19 + Vite frontend dashboard (Stage 1).
+- **`src/`**: Strict TypeScript React 19 + Vite frontend dashboard, using the shared package for API contracts.
 - **`packages/shared/`**: Shared TypeScript enums, document types, and Zod input validation schemas. Server-controlled fields (`approvalStatus`, `riskLevel`, `complianceScore`, etc.) are omitted from input schemas to prevent mass-assignment.
 - **`apps/api/`**: Express / Mongoose API (TypeScript) with authentication, Tool Registry, Requests, Audit, Dashboard, Settings, and Users routes, plus an insert-only, tamper-evident hash-chained audit service.
 
@@ -51,7 +51,7 @@ Run scripts from the root using the API workspace:
   ```bash
   npm run verify-audit --workspace=@aegisai/api
   ```
-The API scripts require `MONGODB_URI`. Copy `.env.example` to `.env` and set the variable for your shell, or provide it directly in the environment before running them. The API server, authentication, Tool Registry, Requests, and Audit endpoints are implemented; start the current application UI with `npm run dev`.
+The API scripts require `MONGODB_URI`. Copy `.env.example` to `.env` and set the variable for your shell, or provide it directly in the environment before running them. The API server, authentication, Tool Registry, Requests, and Audit endpoints are implemented; the live Overview, Tool Registry, and Audit Log pages are available in the frontend. Start the current application UI with `npm run dev`.
 
 The seed script is disabled when `NODE_ENV=production`. Set `SEED_ADMIN_PASSWORD` in the local environment before seeding; it must be at least 12 characters. Only the initial Admin seed account receives this password, and the value must never be committed.
 

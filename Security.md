@@ -165,20 +165,27 @@ Keep a one-page contact sheet: who owns the product, who can rotate secrets, who
 
 **Before the first pilot (P0)**
 
-- Checklist status: 1 of 12 P0 controls verified; 0 of 5 P1 controls verified.
+- Checklist status: 6 of 12 P0 controls verified; 0 of 5 P1 controls verified.
 
-- [x] Every route has an explicit role rule; the table-driven role test passes.
+- [x] Every route has an explicit role rule; `apps/api/src/routes/routeRoleMatrix.test.ts`.
 - [ ] Login rate limiting and lockout work against a scripted attack.
-- [ ] Cookies are httpOnly, `Secure` and `SameSite`; CSRF protection is tested.
+- [x] Cookies are httpOnly, `Secure` and `SameSite`; CSRF protection is tested. Evidence: `apps/api/src/routes/authRoutes.test.ts` (cookie flags and missing-CSRF rejection).
 - [ ] NoSQL operator injection attempts on login and filters are rejected.
 - [ ] A tool description containing a script renders as plain text in the registry and the audit log.
-- [ ] CSV export neutralizes cells that start with `=`, `+`, `-` or `@`.
+- [x] CSV export neutralizes cells that start with `=`, `+`, `-` or `@`. Evidence: `apps/api/src/routes/auditRoutes.test.ts` and the CSV escaping logic in `apps/api/src/routes/auditRoutes.ts`.
 - [ ] The API database user cannot update or delete `auditEvents` (verified by trying).
-- [ ] Chain verification detects a manually edited event in a test database.
+- [x] Chain verification detects a manually edited event in a test database. Evidence: `apps/api/src/routes/auditRoutes.test.ts` and `apps/api/src/services/auditService.test.ts`.
 - [ ] No secrets in the repository history; secret scanning enabled.
 - [ ] Backups run and a restore has been tested once.
-- [ ] Production has no default or seed credentials.
-- [ ] Error responses show no stack traces or database details.
+- [x] Production has no default or seed credentials. Evidence: `apps/api/src/scripts/seed.ts` refuses production and reads the seed password from `SEED_ADMIN_PASSWORD`.
+- [x] Error responses show no stack traces or database details. Evidence: `apps/api/src/middleware/errorHandler.ts` returns a fixed public error response rather than exception details.
+
+Evidence still needed for unchecked P0 items:
+- Add a named test for request-rate limiting and repeat the lockout test as a scripted attack; current lockout threshold/expiry tests are in `apps/api/src/routes/authRoutes.test.ts`.
+- Add a login operator-injection test; `apps/api/src/routes/auditRoutes.test.ts` covers operator-prefixed audit filters only.
+- Add a frontend test showing script-like tool descriptions render as text in both the registry and audit log.
+- Verify database permissions by attempting update/delete with the deployed API database user.
+- Record a successful full-history Gitleaks scan and a tested backup restore; CI config exists, but scan/restore results are not evidence in this repository.
 
 **Before wider release (P1)**
 

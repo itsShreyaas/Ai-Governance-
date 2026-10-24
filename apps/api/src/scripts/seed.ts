@@ -1,7 +1,6 @@
 /**
- * Seed script — loads mock data from src/data/mockData.js
- * (replicated here as TypeScript so the script has no dependency on the
- * frontend source tree, keeping apps/api fully independent).
+ * Seed script — defines seed data in TypeScript without depending on the
+ * frontend source tree, keeping apps/api fully independent.
  *
  * Inserts:
  *  - 1  system user ("Automated Scanner / sentinel")

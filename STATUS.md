@@ -2,8 +2,8 @@
 
 _Last updated: 2026-10-24. Update this file in every PR that changes scope._
 
-**Current stage:** Stage 2a (Foundation), in progress
-**Rough progress:** 27 of 28 tracked Stage 2a items are complete (96%); ~35% of the full roadmap is complete. The roadmap estimate is weighted by the remaining governance-core and scale work, not just checklist counts.
+**Current stage:** Stage 2a (Foundation), complete
+**Rough progress:** 28 of 28 tracked Stage 2a items are complete (100%); ~38% of the full roadmap is complete. The roadmap estimate is weighted by the remaining governance-core and scale work, not just checklist counts.
 
 Legend: `[x]` done · `[ ]` not started · `[~]` partly done
 
@@ -16,7 +16,7 @@ Legend: `[x]` done · `[ ]` not started · `[~]` partly done
 - [x] Audit Log page connected to the API with filters, CSV export and hash-chain verification (2026-10-24)
 - [x] Placeholder pages: Policy Matrix, Risk Assessments, Employee Checker, Settings
 
-## Stage 2a — Foundation (in progress)
+## Stage 2a — Foundation (complete)
 
 ### Shared package (`packages/shared`)
 - [x] Enums, types, Zod schemas (server-controlled fields omitted from input schemas)
@@ -46,30 +46,19 @@ Legend: `[x]` done · `[ ]` not started · `[~]` partly done
 - [x] Pagination (`page`, `limit`, `sort`, total count) on all list endpoints
 - [x] Route-level tests for every endpoint, including a role test table (2026-10-24)
 
-### Frontend wiring (in progress)
+### Frontend wiring (complete for Stage 2a)
 - [x] Login page and auth context (cookie session, refresh)
 - [x] API client layer for auth and dashboard (mock data retained for unconverted pages)
 - [x] Live Overview KPIs (remove the literal "+2 this month" and "1.4d") (2026-10-24)
 - [x] Live Tool Registry with search, filters, detail view and Register Tool form (2026-10-24)
 - [x] Live Audit Log with filters and CSV export (2026-10-24)
 - [x] Sidebar badges and topbar search wired to real data (2026-10-24)
+- [x] Frontend converted to strict TypeScript; frontend and Vite config are included in typecheck (2026-10-24)
 
 ### Tooling
 - [x] CI workflow runs lint, typecheck, test and build; Gitleaks scans pushes and pull requests (2026-10-24)
 - [x] Seed script refuses production and requires `SEED_ADMIN_PASSWORD`; no seed password is hardcoded (2026-10-24)
-- [ ] Convert frontend to TypeScript (planned; do not start until the other Stage 2a work is complete)
-
-#### Frontend TypeScript conversion plan (not started)
-
-Convert the existing JavaScript/JSX files in this order, introducing shared types from `packages/shared` as needed:
-
-1. API and data foundations: `src/api/client.js`, `src/data/mockData.js`
-2. Context contracts and hooks: `src/context/authContextObject.js`, `src/context/themeContextObject.js`, `src/context/useAuth.js`, `src/context/useTheme.js`
-3. Context providers: `src/context/AuthContext.jsx`, `src/context/ThemeContext.jsx`
-4. Shared and dashboard components: `src/components/common/PagePlaceholder.jsx`, `src/components/dashboard/KpiCard.jsx`, `src/components/dashboard/PendingReviewList.jsx`, `src/components/dashboard/RecentActivity.jsx`, `src/components/dashboard/RiskChart.jsx`, `src/components/dashboard/StatusChart.jsx`
-5. Layout components: `src/components/layout/AppLayout.jsx`, `src/components/layout/Sidebar.jsx`, `src/components/layout/Topbar.jsx`
-6. Pages: `src/pages/LoginPage.jsx`, `src/pages/OverviewPage.jsx`, `src/pages/ToolRegistryPage.jsx`, `src/pages/AuditLogPage.jsx`, `src/pages/PolicyMatrixPage.jsx`, `src/pages/RiskAssessmentsPage.jsx`, `src/pages/EmployeeCheckerPage.jsx`, `src/pages/SettingsPage.jsx`
-7. Application entry points: `src/App.jsx`, `src/main.jsx`
+- [x] Route pages lazy-loaded; lint and production build complete without the prior effect/chunk-size warnings (2026-10-24)
 
 ### Documentation
 - [x] Update implementation status, security checklist counts and decided PRD open questions (2026-10-24)
@@ -86,13 +75,14 @@ Build order from the PRD:
 
 ## Security checklist
 `Security.md` tracks 12 pre-pilot (P0) controls and 5 wider-release (P1) controls; its separate 7 open questions are not checklist items.
-- Pre-pilot items done: 1 of 12
+- Pre-pilot items done: 6 of 12
 - Later items done: 0 of 5
 
 ---
 
 ## Documentation drift resolved
 - [x] `README.md` accurately describes the implemented API and auth routes.
+- [x] `README.md` describes the strict TypeScript frontend and live Stage 2a pages (2026-10-24).
 - [x] `PRD.md` sections 1 and 5 reflect the implemented API and live Overview, Tool Registry, Audit Log, sidebar and search (2026-10-24).
 - [x] `ARCHITECTURE.md` documents the implemented server, routes, authentication and role middleware.
 - [x] PRD section 15 records decisions already made in `Tech Stack.md` and leaves undecided questions open (2026-10-24).
