@@ -1,6 +1,6 @@
 # AegisAI — Project Status
 
-_Last updated: 2026-12-31. Update this file in every PR that changes scope._
+_Last updated: 2026-10-24. Update this file in every PR that changes scope._
 
 **Current stage:** Stage 2a (Foundation), in progress
 **Rough progress:** 27 of 28 tracked Stage 2a items are complete (96%); ~35% of the full roadmap is complete. The roadmap estimate is weighted by the remaining governance-core and scale work, not just checklist counts.
@@ -11,9 +11,9 @@ Legend: `[x]` done · `[ ]` not started · `[~]` partly done
 
 ## Stage 1 — Prototype (done)
 - [x] React 19 + Vite frontend, routing, light/dark theme, responsive layout
-- [x] Overview dashboard connected to live dashboard data (2026-12-31)
-- [x] Tool Registry page connected to the API with search, filters, detail view and registration (2026-12-31)
-- [x] Audit Log page connected to the API with filters, CSV export and hash-chain verification (2026-12-31)
+- [x] Overview dashboard connected to live dashboard data (2026-10-24)
+- [x] Tool Registry page connected to the API with search, filters, detail view and registration (2026-10-24)
+- [x] Audit Log page connected to the API with filters, CSV export and hash-chain verification (2026-10-24)
 - [x] Placeholder pages: Policy Matrix, Risk Assessments, Employee Checker, Settings
 
 ## Stage 2a — Foundation (in progress)
@@ -32,8 +32,8 @@ Legend: `[x]` done · `[ ]` not started · `[~]` partly done
 - [x] `POST /auth/login`, `/auth/refresh`, `/auth/logout`, `GET /auth/me`
 - [x] Rate limiting, CSRF header check, `requireAuth`, `requireRole`, `validate` middleware
 - [x] Auth route tests
-- [x] Audit events for successful/failed login, unknown and locked-account attempts, and logout (FR-15) (2026-12-31)
-- [x] Account lockout after five failures for 15 minutes, with expiry and success reset tests (2026-12-31)
+- [x] Audit events for successful/failed login, unknown and locked-account attempts, and logout (FR-15) (2026-10-24)
+- [x] Account lockout after five failures for 15 minutes, with expiry and success reset tests (2026-10-24)
 
 ### API endpoints
 - [x] Registry: `GET/POST /tools`, `PATCH /tools/:id`, `POST /tools/:id/decision` (FR-3, FR-4, FR-5)
@@ -44,19 +44,19 @@ Legend: `[x]` done · `[ ]` not started · `[~]` partly done
 - [x] Settings and Users endpoints (FR-20)
 	- Admin-only; Slack/SMTP values are write-only, and user passwords are hashed at creation.
 - [x] Pagination (`page`, `limit`, `sort`, total count) on all list endpoints
-- [x] Route-level tests for every endpoint, including a role test table (2026-12-31)
+- [x] Route-level tests for every endpoint, including a role test table (2026-10-24)
 
 ### Frontend wiring (in progress)
 - [x] Login page and auth context (cookie session, refresh)
 - [x] API client layer for auth and dashboard (mock data retained for unconverted pages)
-- [x] Live Overview KPIs (remove the literal "+2 this month" and "1.4d") (2026-12-31)
-- [x] Live Tool Registry with search, filters, detail view and Register Tool form (2026-12-31)
-- [x] Live Audit Log with filters and CSV export (2026-12-31)
-- [x] Sidebar badges and topbar search wired to real data (2026-12-31)
+- [x] Live Overview KPIs (remove the literal "+2 this month" and "1.4d") (2026-10-24)
+- [x] Live Tool Registry with search, filters, detail view and Register Tool form (2026-10-24)
+- [x] Live Audit Log with filters and CSV export (2026-10-24)
+- [x] Sidebar badges and topbar search wired to real data (2026-10-24)
 
 ### Tooling
-- [x] CI workflow runs lint, typecheck, test and build; Gitleaks scans pushes and pull requests (2026-12-31)
-- [x] Seed script refuses production and requires `SEED_ADMIN_PASSWORD`; no seed password is hardcoded (2026-12-31)
+- [x] CI workflow runs lint, typecheck, test and build; Gitleaks scans pushes and pull requests (2026-10-24)
+- [x] Seed script refuses production and requires `SEED_ADMIN_PASSWORD`; no seed password is hardcoded (2026-10-24)
 - [ ] Convert frontend to TypeScript (planned; do not start until the other Stage 2a work is complete)
 
 #### Frontend TypeScript conversion plan (not started)
@@ -72,14 +72,14 @@ Convert the existing JavaScript/JSX files in this order, introducing shared type
 7. Application entry points: `src/App.jsx`, `src/main.jsx`
 
 ### Documentation
-- [x] Update implementation status, security checklist counts and decided PRD open questions (2026-12-31)
+- [x] Update implementation status, security checklist counts and decided PRD open questions (2026-10-24)
 
 ## Stage 2b — Governance core (not started)
 Build order from the PRD: 
 - [ ] Policy Matrix (FR-8, FR-9)
 - [ ] Employee Checker and request hand-off (FR-13, FR-14)
 - [ ] Risk Assessments with documented scoring formula (FR-10, FR-11, FR-12)
-- [~] CSV export and hash-chain verification UI are complete in Stage 2a; PDF export remains (2026-12-31)
+- [~] CSV export and hash-chain verification UI are complete in Stage 2a; PDF export remains (2026-10-24)
 
 ## Stage 3 — Scale (not started)
 - [ ] SSO (SAML/OIDC), discovery, enforcement, alerts, multi-tenancy
@@ -93,9 +93,9 @@ Build order from the PRD:
 
 ## Documentation drift resolved
 - [x] `README.md` accurately describes the implemented API and auth routes.
-- [x] `PRD.md` sections 1 and 5 reflect the implemented API and live Overview, Tool Registry, Audit Log, sidebar and search (2026-12-31).
+- [x] `PRD.md` sections 1 and 5 reflect the implemented API and live Overview, Tool Registry, Audit Log, sidebar and search (2026-10-24).
 - [x] `ARCHITECTURE.md` documents the implemented server, routes, authentication and role middleware.
-- [x] PRD section 15 records decisions already made in `Tech Stack.md` and leaves undecided questions open (2026-12-31).
+- [x] PRD section 15 records decisions already made in `Tech Stack.md` and leaves undecided questions open (2026-10-24).
 
 ## Open decisions (from PRD.md and Tech Stack.md)
 - [ ] Who is the first real customer (large enterprise vs colleges and startups)?
