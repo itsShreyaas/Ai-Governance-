@@ -17,6 +17,7 @@ import { logger } from "./logger.js";
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_MS = 15 * 60 * 1000;
+const DUMMY_PASSWORD_HASH = argon2.hash(crypto.randomBytes(32).toString("hex"), { type: argon2.argon2id });
 
 async function passwordMatches(hash: string | undefined, password: string): Promise<boolean> {
   if (hash == null) return false;
@@ -56,7 +57,18 @@ export async function login(input: LoginInput): Promise<AuthSession> {
   try {
     await session.withTransaction(async () => {
       const user = await User.findOne({ email: input.email }).session(session);
-      if (user == null) return;
+      if (user == null) {
+        await passwordMatches(await DUMMY_PASSWORD_HASH, input.password);
+        await appendAuditEvent(
+          {
+            eventType: AuditEventType.LoginFailed,
+            severity: AuditSeverity.Warning,
+            details: "Failed login attempt",
+          },
+          session
+        );
+        return;
+      }
 
       const isLocked = user.lockoutUntil != null && user.lockoutUntil.getTime() > Date.now();
       const validPassword = !isLocked && await passwordMatches(user.passwordHash, input.password);
@@ -69,6 +81,8 @@ export async function login(input: LoginInput): Promise<AuthSession> {
             { $inc: { failedLoginAttempts: 1 }, ...(lockoutUntil == null ? {} : { $set: { lockoutUntil } }) },
             { session }
           );
+        }
+        if (user.isActive) {
           await appendAuditEvent(
             {
               eventType: AuditEventType.LoginFailed,
@@ -239,7 +253,7 @@ export async function logout(refreshToken: string): Promise<void> {
       const user = await User.findById(storedToken.userId).session(session);
       await appendAuditEvent(
         {
-          eventType: AuditEventType.AccessRevocation,
+          eventType: AuditEventType.Logout,
           severity: AuditSeverity.Info,
           actorId: storedToken.userId.toString(),
           ...(user == null ? {} : { department: user.department }),

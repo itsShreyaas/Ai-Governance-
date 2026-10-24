@@ -95,7 +95,7 @@ export async function appendAuditEvent(
     // 3. Build canonical event JSON for hashing
     const timestamp = new Date();
     const canonicalPayload = canonicalize({
-      actorId: parsed.actorId,
+      actorId: parsed.actorId ?? null,
       department: parsed.department ?? null,
       details: parsed.details,
       eventType: parsed.eventType,
@@ -117,7 +117,7 @@ export async function appendAuditEvent(
           eventType: parsed.eventType,
           severity: parsed.severity,
           toolId: parsed.toolId ?? undefined,
-          actor: parsed.actorId,
+          ...(parsed.actorId == null ? {} : { actor: parsed.actorId }),
           department: parsed.department,
           details: parsed.details,
           previousHash,
@@ -160,7 +160,7 @@ export async function verifyChain(): Promise<VerifyResult> {
 
   for (const ev of events) {
     const canonicalPayload = canonicalize({
-      actorId: ev.actor.toString(),
+      actorId: ev.actor?.toString() ?? null,
       department: ev.department ?? null,
       details: ev.details,
       eventType: ev.eventType,

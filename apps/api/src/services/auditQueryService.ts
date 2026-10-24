@@ -22,7 +22,7 @@ export interface AuditCsvRow {
   severity: string;
   toolId?: mongoose.Types.ObjectId;
   toolName?: string;
-  actorId: mongoose.Types.ObjectId;
+  actorId?: mongoose.Types.ObjectId;
   actorName?: string;
   department?: string;
   details: string;
@@ -64,8 +64,8 @@ export async function listAuditEvents(query: AuditListQuery) {
   );
 
   const data = result.data.map((event) => {
-    const actorRecord = event.actor as unknown as { _id?: mongoose.Types.ObjectId; name?: string };
-    const actorId = actorRecord?._id?.toString() ?? String(event.actor);
+    const actorRecord = event.actor as unknown as { _id?: mongoose.Types.ObjectId; name?: string } | null;
+    const actorId = actorRecord?._id?.toString() ?? (event.actor == null ? null : String(event.actor));
     return {
       sequence: event.sequence,
       timestamp: event.timestamp,
@@ -148,4 +148,3 @@ export async function getAuditVerification() {
     ...(result.firstBadSequence == null ? {} : { firstBrokenSequence: result.firstBadSequence }),
   };
 }
-

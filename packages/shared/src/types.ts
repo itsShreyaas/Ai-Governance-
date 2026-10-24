@@ -113,7 +113,7 @@ export interface AuditEventDoc {
   eventType: AuditEventType;
   severity: AuditSeverity;
   toolId?: string;
-  actor: string; // User ObjectId
+  actor?: string; // User ObjectId; absent for unauthenticated events
   department?: string;
   details: string;
   previousHash: string;

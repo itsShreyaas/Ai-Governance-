@@ -104,22 +104,34 @@ describe("authentication routes", () => {
   it("returns the same generic error for invalid credentials and audits a known account failure", async () => {
     await createUser();
 
-    const response = await request(app)
+    const knownAccountResponse = await request(app)
       .post("/api/v1/auth/login")
       .set("x-aegis-csrf", "1")
       .send({ email: testEmail, password: "incorrect-password" });
 
-    expect(response.status).toBe(401);
-    expect(response.body).toEqual({
+    const unknownAccountResponse = await request(app)
+      .post("/api/v1/auth/login")
+      .set("x-aegis-csrf", "1")
+      .send({ email: "unknown@example.test", password: "incorrect-password" });
+
+    expect(knownAccountResponse.status).toBe(401);
+    expect(knownAccountResponse.body).toEqual({
       status: 401,
       code: "INVALID_CREDENTIALS",
       message: "Email or password is incorrect",
     });
+    expect(unknownAccountResponse.status).toBe(knownAccountResponse.status);
+    expect(unknownAccountResponse.body).toEqual(knownAccountResponse.body);
     expect((await User.findOne({ email: testEmail }))?.failedLoginAttempts).toBe(1);
-    expect(await AuditEvent.countDocuments({ eventType: "LOGIN_FAILED" })).toBe(1);
+    const failures = await AuditEvent.find({ eventType: "LOGIN_FAILED" }).sort({ sequence: 1 });
+    expect(failures).toHaveLength(2);
+    expect(failures[0]?.actor?.toString()).toBe((await User.findOne({ email: testEmail }))?._id.toString());
+    expect(failures[1]?.actor).toBeUndefined();
+    expect(failures[1]?.details).not.toContain("unknown@example.test");
+    expect(failures[1]?.details).not.toContain("incorrect-password");
   });
 
-  it("locks an account after five failed password attempts", async () => {
+  it("locks an account after five failed password attempts and audits further locked attempts", async () => {
     await createUser();
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -133,6 +145,50 @@ describe("authentication routes", () => {
     const lockedUser = await User.findOne({ email: testEmail });
     expect(lockedUser?.failedLoginAttempts).toBe(5);
     expect(lockedUser?.lockoutUntil?.getTime()).toBeGreaterThan(Date.now());
+
+    const lockedAttempt = await request(app)
+      .post("/api/v1/auth/login")
+      .set("x-aegis-csrf", "1")
+      .send({ email: testEmail, password: testPassword });
+    expect(lockedAttempt.status).toBe(401);
+    expect((await User.findOne({ email: testEmail }))?.failedLoginAttempts).toBe(5);
+    expect(await AuditEvent.countDocuments({ eventType: "LOGIN_FAILED" })).toBe(6);
+  });
+
+  it("allows login after lockout expiry and resets failed attempts", async () => {
+    await createUser();
+    await User.updateOne(
+      { email: testEmail },
+      { $set: { failedLoginAttempts: 5, lockoutUntil: new Date(Date.now() - 1) } }
+    );
+
+    const response = await request(app)
+      .post("/api/v1/auth/login")
+      .set("x-aegis-csrf", "1")
+      .send({ email: testEmail, password: testPassword });
+
+    expect(response.status).toBe(200);
+    const unlockedUser = await User.findOne({ email: testEmail });
+    expect(unlockedUser?.failedLoginAttempts).toBe(0);
+    expect(unlockedUser?.lockoutUntil).toBeNull();
+    expect(await AuditEvent.countDocuments({ eventType: "LOGIN" })).toBe(1);
+  });
+
+  it("audits logout with a dedicated LOGOUT event", async () => {
+    await createUser();
+    const loginResponse = await request(app)
+      .post("/api/v1/auth/login")
+      .set("x-aegis-csrf", "1")
+      .send({ email: testEmail, password: testPassword });
+
+    const response = await request(app)
+      .post("/api/v1/auth/logout")
+      .set("x-aegis-csrf", "1")
+      .set("Cookie", cookiePair(loginResponse, "aegis_refresh"));
+
+    expect(response.status).toBe(204);
+    expect(await AuditEvent.countDocuments({ eventType: "LOGOUT" })).toBe(1);
+    expect(await AuditEvent.countDocuments({ eventType: "ACCESS_REVOCATION" })).toBe(0);
   });
 
   it("rotates refresh tokens and revokes the complete family when the old token is reused", async () => {

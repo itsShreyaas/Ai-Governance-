@@ -7,7 +7,7 @@ export interface IAuditEvent extends Document {
   eventType: string;
   severity: string;
   toolId?: Types.ObjectId;
-  actor: Types.ObjectId;
+  actor?: Types.ObjectId;
   department?: string;
   details: string;
   previousHash: string;
@@ -29,7 +29,7 @@ const AuditEventSchema = new Schema<IAuditEvent>(
       enum: Object.values(AuditSeverity),
     },
     toolId: { type: Schema.Types.ObjectId, ref: "Tool" },
-    actor: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    actor: { type: Schema.Types.ObjectId, ref: "User" },
     department: { type: String, maxlength: 100 },
     details: { type: String, required: true, maxlength: 5000 },
     previousHash: { type: String, required: true },

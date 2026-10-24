@@ -42,6 +42,7 @@ export const AuditEventType = {
   SettingsUpdated: "SETTINGS_UPDATED",
   Login: "LOGIN",
   LoginFailed: "LOGIN_FAILED",
+  Logout: "LOGOUT",
   SessionRefresh: "SESSION_REFRESH",
   Export: "EXPORT",
   ChainVerifyFailed: "CHAIN_VERIFY_FAILED",

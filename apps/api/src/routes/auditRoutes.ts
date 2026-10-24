@@ -32,7 +32,7 @@ const exportHandler: RequestHandler = async (req, res) => {
       row.severity,
       row.toolId?.toString(),
       row.toolName,
-      row.actorId.toString(),
+      row.actorId?.toString(),
       row.actorName,
       row.department,
       row.details,

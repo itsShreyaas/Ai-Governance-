@@ -153,7 +153,7 @@ describe("audit routes", () => {
     expect(response.text).toContain("'=1+1");
     expect(response.text).toContain('"quoted, ""line""\nnext"');
     const exportEvent = await AuditEvent.findOne({ eventType: AuditEventType.Export });
-    expect(exportEvent?.actor.toString()).toBe(admin._id.toString());
+    expect(exportEvent?.actor?.toString()).toBe(admin._id.toString());
     expect(exportEvent?.details).toContain('filters={"eventType":"TOOL_SUBMISSION"}');
     expect(exportEvent?.details).toContain("rows=1");
   });

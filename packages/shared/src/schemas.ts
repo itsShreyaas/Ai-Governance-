@@ -300,7 +300,7 @@ export const InternalAuditEventInputSchema = z
     eventType: z.enum(enumValues(AuditEventType)),
     severity: z.enum(enumValues(AuditSeverity)),
     toolId: z.string().optional(),
-    actorId: z.string(), // ObjectId as string
+    actorId: z.string().optional(), // ObjectId as string
     department: z.string().max(100).optional(),
     details: z.string().max(5000),
   })
