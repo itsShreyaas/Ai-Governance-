@@ -127,3 +127,22 @@ export async function getMe() {
 export function getDashboard() {
   return request("/dashboard");
 }
+
+export function getTools(filters = {}, options = {}) {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  }
+  const query = searchParams.size > 0 ? `?${searchParams.toString()}` : "";
+  return request(`/tools${query}`, options);
+}
+
+export function createTool(tool) {
+  return request("/tools", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(tool),
+  });
+}
