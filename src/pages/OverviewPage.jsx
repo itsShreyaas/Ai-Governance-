@@ -1,14 +1,12 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Boxes,
   ShieldCheck,
   ShieldAlert,
   Clock,
   Download,
-  Users,
-  Award,
 } from "lucide-react";
-import { mockAiTools, mockAuditEvents, getGovernanceMetrics } from "../data/mockData";
+import { getDashboard } from "../api/client";
 import { KpiCard } from "../components/dashboard/KpiCard";
 import { StatusChart } from "../components/dashboard/StatusChart";
 import { RiskChart } from "../components/dashboard/RiskChart";
@@ -16,12 +14,62 @@ import { RecentActivity } from "../components/dashboard/RecentActivity";
 import { PendingReviewList } from "../components/dashboard/PendingReviewList";
 
 export const OverviewPage = () => {
-  const metrics = getGovernanceMetrics(mockAiTools, mockAuditEvents);
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const totalUsers = mockAiTools.reduce((acc, t) => acc + (t.userCount || 0), 0);
-  const avgCompliance = Math.round(
-    mockAiTools.reduce((acc, t) => acc + (t.complianceScore || 0), 0) / mockAiTools.length
-  );
+  const loadDashboard = useCallback(async () => {
+    try {
+      setDashboard(await getDashboard());
+    } catch (requestError) {
+      setError(requestError.message || "Unable to load dashboard data.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const retryDashboard = () => {
+    setLoading(true);
+    setError("");
+    void loadDashboard();
+  };
+
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
+
+  if (loading) {
+    return (
+      <div className="space-y-6" aria-label="Loading dashboard">
+        <div className="h-16 animate-pulse rounded-xl bg-neutral-200/70 dark:bg-neutral-800" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="h-32 animate-pulse rounded-xl border border-[#E8E8E4] bg-neutral-100 dark:border-[#27282B] dark:bg-[#18191B]" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {Array.from({ length: 2 }, (_, index) => (
+            <div key={index} className="h-72 animate-pulse rounded-xl border border-[#E8E8E4] bg-neutral-100 dark:border-[#27282B] dark:bg-[#18191B]" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+        <p className="font-semibold">Dashboard data could not be loaded</p>
+        <p className="mt-1">{error}</p>
+        <button type="button" onClick={retryDashboard} className="mt-4 rounded-lg bg-rose-700 px-3 py-2 font-medium text-white hover:bg-rose-800 dark:bg-rose-600 dark:hover:bg-rose-500">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const metrics = dashboard.kpis;
+  const hasDashboardData = metrics.totalTools > 0 || dashboard.toolsNeedingReview.length > 0 || dashboard.recentAudits.length > 0;
 
   return (
     <div className="space-y-6">
@@ -44,18 +92,6 @@ export const OverviewPage = () => {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-neutral-100/70 dark:bg-neutral-800/70 text-xs text-[#555] dark:text-[#AAA] border border-[#E8E8E4] dark:border-[#2C2E32]">
-            <Users className="w-3.5 h-3.5 text-[#1B4D3E] dark:text-emerald-400" />
-            <span>
-              <strong className="text-[#18191B] dark:text-white font-semibold">{totalUsers}</strong> active users
-            </span>
-            <span className="text-neutral-300 dark:text-neutral-700">|</span>
-            <Award className="w-3.5 h-3.5 text-[#1B4D3E] dark:text-emerald-400" />
-            <span>
-              <strong className="text-[#18191B] dark:text-white font-semibold">{avgCompliance}%</strong> compliance avg
-            </span>
-          </div>
-
           <button
             onClick={() => window.print()}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#18191B] dark:text-[#EDEDED] bg-white dark:bg-[#1A1C1E] border border-[#E4E4E0] dark:border-[#2C2E32] hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors shadow-2xs"
@@ -72,10 +108,10 @@ export const OverviewPage = () => {
           title="Total AI Tools"
           value={metrics.totalTools}
           subtitle="Enterprise fleet catalog"
-          badgeText="100% Tracked"
+          badgeText="Live"
           badgeVariant="forest"
           icon={Boxes}
-          trend="+2 this month"
+          trend={`${metrics.toolsAddedThisMonth} added this month`}
         />
         <KpiCard
           title="Approved Tools"
@@ -84,7 +120,7 @@ export const OverviewPage = () => {
           badgeText="Safe to Use"
           badgeVariant="emerald"
           icon={ShieldCheck}
-          trend={`${Math.round((metrics.approvedTools / metrics.totalTools) * 100)}% of fleet`}
+          trend={`${metrics.totalTools ? Math.round((metrics.approvedTools / metrics.totalTools) * 100) : 0}% of fleet`}
         />
         <KpiCard
           title="Restricted Tools"
@@ -93,7 +129,7 @@ export const OverviewPage = () => {
           badgeText="Isolated"
           badgeVariant="rose"
           icon={ShieldAlert}
-          trend="IP protection active"
+          trend={undefined}
         />
         <KpiCard
           title="Pending Review"
@@ -102,27 +138,27 @@ export const OverviewPage = () => {
           badgeText="Action Needed"
           badgeVariant="amber"
           icon={Clock}
-          trend="Avg response 1.4d"
+          trend={metrics.avgReviewDays == null ? undefined : `Avg response ${metrics.avgReviewDays.toFixed(1)}d`}
         />
       </div>
 
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <StatusChart
-          data={metrics.statusChartData}
-          totalTools={metrics.totalTools}
-        />
-        <RiskChart
-          data={metrics.riskChartData}
-          totalTools={metrics.totalTools}
-        />
-      </div>
-
-      {/* Lists Row: Tools Needing Review & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <PendingReviewList tools={metrics.toolsNeedingReview} />
-        <RecentActivity events={metrics.recentAudits} />
-      </div>
+      {hasDashboardData ? (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <StatusChart data={dashboard.statusChartData} totalTools={metrics.totalTools} />
+            <RiskChart data={dashboard.riskChartData} totalTools={metrics.totalTools} />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <PendingReviewList tools={dashboard.toolsNeedingReview} />
+            <RecentActivity events={dashboard.recentAudits} />
+          </div>
+        </>
+      ) : (
+        <div className="rounded-xl border border-dashed border-[#D5D5D0] bg-white p-10 text-center dark:border-[#35373B] dark:bg-[#18191B]">
+          <h2 className="font-semibold">No governance activity yet</h2>
+          <p className="mt-1 text-sm text-[#717378] dark:text-[#8E9096]">Dashboard charts and activity will appear as tools and audit events are added.</p>
+        </div>
+      )}
     </div>
   );
 };

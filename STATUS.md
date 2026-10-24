@@ -1,9 +1,9 @@
 # AegisAI — Project Status
 
-_Last updated: 2026-10-17. Update this file in every PR that changes scope._
+_Last updated: 2026-10-23. Update this file in every PR that changes scope._
 
 **Current stage:** Stage 2a (Foundation), in progress
-**Rough progress:** ~83% of Stage 2a, ~25–30% of the full PRD (2a + 2b + 3). This is an estimate; adjust it as items below are ticked.
+**Rough progress:** ~90% of Stage 2a, ~30–35% of the full PRD (2a + 2b + 3). This is an estimate; adjust it as items below are ticked.
 
 Legend: `[x]` done · `[ ]` not started · `[~]` partly done
 
@@ -46,10 +46,10 @@ Legend: `[x]` done · `[ ]` not started · `[~]` partly done
 - [x] Pagination (`page`, `limit`, `sort`, total count) on all list endpoints
 - [ ] Route-level tests for every endpoint, including a role test table
 
-### Frontend wiring (not started)
-- [ ] Login page and auth context (cookie session, refresh)
-- [ ] API client layer replacing `src/data/mockData.js`
-- [ ] Live Overview KPIs (remove the literal "+2 this month" and "1.4d")
+### Frontend wiring (in progress)
+- [x] Login page and auth context (cookie session, refresh)
+- [x] API client layer for auth and dashboard (mock data retained for unconverted pages)
+- [x] Live Overview KPIs (remove the literal "+2 this month" and "1.4d")
 - [ ] Live Tool Registry with search, filters, detail view and Register Tool form
 - [ ] Live Audit Log with filters and CSV export
 - [ ] Sidebar badges and topbar search wired to real data

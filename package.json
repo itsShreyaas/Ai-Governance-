@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "predev": "npm run build --workspace=@aegisai/shared",
     "dev": "vite",
     "build": "npm run build --workspace=@aegisai/shared && npm run build --workspace=@aegisai/api && vite build",
     "typecheck": "npm run build --workspace=@aegisai/shared && npm run typecheck --workspace=@aegisai/shared && npm run typecheck --workspace=@aegisai/api",
@@ -16,6 +17,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aegisai/shared": "file:packages/shared",
     "@tailwindcss/vite": "^4.3.3",
     "lucide-react": "^1.55.0",
     "react": "^19.2.8",

@@ -12,6 +12,7 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
+import { useAuth } from "../../context/useAuth";
 
 const navItems = [
   { name: "Overview", path: "/", icon: LayoutDashboard },
@@ -24,6 +25,9 @@ const navItems = [
 ];
 
 export const Sidebar = ({ isOpen, onClose }) => {
+  const { role } = useAuth();
+  const visibleItems = navItems.filter((item) => item.path !== "/settings" || role === "Admin");
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -77,7 +81,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
               Core Platform
             </div>
             <nav className="space-y-1">
-              {navItems.map((item) => {
+              {visibleItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <NavLink

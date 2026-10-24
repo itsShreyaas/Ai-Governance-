@@ -14,6 +14,7 @@ import {
   Sliders,
 } from "lucide-react";
 import { useTheme } from "../../context/useTheme";
+import { useAuth } from "../../context/useAuth";
 
 const routeTitles = {
   "/": "Governance Overview",
@@ -28,15 +29,27 @@ const routeTitles = {
 export const Topbar = ({ onOpenSidebar }) => {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
 
   const notifRef = useRef(null);
   const userRef = useRef(null);
 
   const currentTitle = routeTitles[location.pathname] || "Dashboard";
+  const initials = user?.name?.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "U";
+
+  const handleLogout = async () => {
+    setLogoutError("");
+    try {
+      await logout();
+    } catch (error) {
+      setLogoutError(error.message || "Unable to sign out. Please try again.");
+    }
+  };
 
   // Close popovers on click outside
   useEffect(() => {
@@ -162,14 +175,14 @@ export const Topbar = ({ onOpenSidebar }) => {
             className="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-lg hover:bg-neutral-200/60 dark:hover:bg-neutral-800/80 transition-colors text-left"
           >
             <div className="w-7 h-7 rounded-full bg-[#1B4D3E] dark:bg-emerald-600 text-white font-medium text-xs flex items-center justify-center shrink-0">
-              AV
+              {initials}
             </div>
             <div className="hidden lg:block">
               <div className="text-xs font-semibold text-[#18191B] dark:text-[#EDEDED] leading-none">
-                Alex Vance
+                {user?.name}
               </div>
               <div className="text-[10px] text-[#717378] dark:text-[#8E9096] leading-tight mt-0.5">
-                Compliance Officer
+                {user?.role}
               </div>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-[#888] hidden sm:block" />
@@ -179,13 +192,13 @@ export const Topbar = ({ onOpenSidebar }) => {
             <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white dark:bg-[#18191B] border border-[#E4E4E0] dark:border-[#2A2C30] shadow-xl p-1.5 z-50 text-xs">
               <div className="px-3 py-2 border-b border-[#EAEAE6] dark:border-[#26282B] mb-1">
                 <p className="font-semibold text-[#18191B] dark:text-[#EDEDED]">
-                  Alex Vance
+                  {user?.name}
                 </p>
                 <p className="text-[11px] text-[#717378] dark:text-[#8E9096] truncate">
-                  alex.v@acmecorp.com
+                  {user?.email}
                 </p>
                 <div className="mt-1.5 inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
-                  Global Policy Admin
+                  {user?.role}
                 </div>
               </div>
 
@@ -206,12 +219,13 @@ export const Topbar = ({ onOpenSidebar }) => {
                 </button>
                 <div className="my-1 border-t border-[#EAEAE6] dark:border-[#26282B]" />
                 <button
-                  onClick={() => setShowUserMenu(false)}
+                  onClick={() => void handleLogout()}
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign out</span>
                 </button>
+                {logoutError && <p role="alert" className="px-2.5 py-1.5 text-[11px] text-rose-600 dark:text-rose-400">{logoutError}</p>}
               </div>
             </div>
           )}
