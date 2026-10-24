@@ -137,8 +137,8 @@ export async function getMe() {
   return response.user;
 }
 
-export function getDashboard() {
-  return request("/dashboard");
+export function getDashboard(options = {}) {
+  return request("/dashboard", options);
 }
 
 export function getTools(filters = {}, options = {}) {

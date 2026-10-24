@@ -5,6 +5,8 @@ import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   ApprovalStatus,
+  AssessmentFramework,
+  AssessmentStatus,
   AuditEventType,
   AuditSeverity,
   RequestStatus,
@@ -12,6 +14,7 @@ import {
   UserRole,
 } from "@aegisai/shared";
 import { app } from "../app.js";
+import { Assessment } from "../models/Assessment.js";
 import { AuditEvent } from "../models/AuditEvent.js";
 import { Counter } from "../models/Counter.js";
 import { Request as ToolRequest } from "../models/Request.js";
@@ -93,6 +96,7 @@ beforeEach(async () => {
   cookieCache.clear();
   await Promise.all([
     AuditEvent.deleteMany({}),
+    Assessment.deleteMany({}),
     Counter.deleteMany({}),
     ToolRequest.deleteMany({}),
     Tool.deleteMany({}),
@@ -107,6 +111,29 @@ describe("dashboard route", () => {
     const approved = await makeTool({ name: "Approved tool", approvalStatus: ApprovalStatus.Approved, riskLevel: RiskLevel.Low });
     const elevatedRisk = await makeTool({ name: "Elevated risk tool", approvalStatus: ApprovalStatus.Approved, riskLevel: RiskLevel.High });
     const pending = await makeTool({ name: "Pending tool", approvalStatus: ApprovalStatus.PendingReview, riskLevel: RiskLevel.High });
+    await Assessment.create([
+      {
+        toolId: approved._id,
+        framework: AssessmentFramework.NistAiRmf,
+        answers: [],
+        assessor: reviewer._id,
+        status: AssessmentStatus.Draft,
+      },
+      {
+        toolId: pending._id,
+        framework: AssessmentFramework.Iso42001,
+        answers: [],
+        assessor: reviewer._id,
+        status: AssessmentStatus.Submitted,
+      },
+      {
+        toolId: elevatedRisk._id,
+        framework: AssessmentFramework.EuAiAct,
+        answers: [],
+        assessor: reviewer._id,
+        status: AssessmentStatus.Approved,
+      },
+    ]);
     await makeTool({ name: "Restricted tool", approvalStatus: ApprovalStatus.Restricted, riskLevel: RiskLevel.Medium });
     const archived = await makeTool({ name: "Archived tool", approvalStatus: ApprovalStatus.Approved, archivedAt: new Date() });
     const requestDoc = await ToolRequest.create({
@@ -150,7 +177,7 @@ describe("dashboard route", () => {
       pendingTools: 1,
       restrictedTools: 1,
       avgReviewDays: 2,
-      openAssessments: 0,
+      openAssessments: 2,
     });
     expect(response.body.statusChartData).toHaveLength(Object.values(ApprovalStatus).length);
     expect(response.body.statusChartData.find((item: { name: string }) => item.name === ApprovalStatus.Revoked).value).toBe(0);

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   AlertCircle,
   ChevronLeft,
@@ -58,8 +59,9 @@ function FieldError({ id, errors }) {
 export const ToolRegistryPage = () => {
   const { role } = useAuth();
   const canRegister = role === UserRole.Admin || role === UserRole.Compliance;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get("search") ?? "";
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [risk, setRisk] = useState("");
   const [department, setDepartment] = useState("");
@@ -106,6 +108,15 @@ export const ToolRegistryPage = () => {
 
   function updateFilter(setter, value) {
     setter(value);
+    setPage(1);
+    setLoading(true);
+  }
+
+  function updateSearch(value) {
+    const nextParams = new URLSearchParams(searchParams);
+    if (value) nextParams.set("search", value);
+    else nextParams.delete("search");
+    setSearchParams(nextParams, { replace: true });
     setPage(1);
     setLoading(true);
   }
@@ -197,7 +208,7 @@ export const ToolRegistryPage = () => {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8C92]" />
             <input
               value={search}
-              onChange={(event) => updateFilter(setSearch, event.target.value)}
+              onChange={(event) => updateSearch(event.target.value)}
               placeholder="Search name, vendor, description"
               className="w-full rounded-lg border border-[#E4E4E0] bg-neutral-50 py-2 pl-9 pr-3 text-xs text-[#18191B] placeholder-[#8A8C92] focus:outline-hidden focus:ring-1 focus:ring-[#1B4D3E] dark:border-[#2C2E32] dark:bg-neutral-900 dark:text-[#EDEDED]"
             />
@@ -238,7 +249,7 @@ export const ToolRegistryPage = () => {
           <button
             type="button"
             onClick={() => {
-              setSearch("");
+              updateSearch("");
               setStatus("");
               setRisk("");
               setDepartment("");

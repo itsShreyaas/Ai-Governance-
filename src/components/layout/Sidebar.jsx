@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,20 +13,65 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
+import { getAudit, getDashboard, getTools } from "../../api/client";
 
 const navItems = [
   { name: "Overview", path: "/", icon: LayoutDashboard },
-  { name: "Tool Registry", path: "/tools", icon: Boxes, badge: "6" },
+  { name: "Tool Registry", path: "/tools", icon: Boxes },
   { name: "Policy Matrix", path: "/policy-matrix", icon: FileSpreadsheet },
-  { name: "Risk Assessments", path: "/risk-assessments", icon: ShieldAlert, badge: "2", badgeColor: "amber" },
-  { name: "Audit Log", path: "/audit-log", icon: History, badge: "10" },
+  { name: "Risk Assessments", path: "/risk-assessments", icon: ShieldAlert, badgeColor: "amber" },
+  { name: "Audit Log", path: "/audit-log", icon: History },
   { name: "Employee Checker", path: "/employee-checker", icon: UserCheck },
   { name: "Settings", path: "/settings", icon: Settings },
 ];
 
 export const Sidebar = ({ isOpen, onClose }) => {
   const { role } = useAuth();
+  const [countSnapshot, setCountSnapshot] = useState(null);
+  const [countError, setCountError] = useState(null);
   const visibleItems = navItems.filter((item) => item.path !== "/settings" || role === "Admin");
+  const liveCounts = countSnapshot?.role === role ? countSnapshot.counts : {};
+  const liveCountError = countError?.role === role ? countError.message : "";
+
+  useEffect(() => {
+    if (role == null) return undefined;
+
+    const controller = new AbortController();
+    const canReadTools = ["Admin", "Compliance", "Requester", "Auditor"].includes(role);
+    const canReadGovernance = ["Admin", "Compliance", "Auditor"].includes(role);
+    const requests = [];
+
+    if (canReadTools) {
+      requests.push(
+        getTools({ page: 1, limit: 1 }, { signal: controller.signal })
+          .then((result) => ["tools", result.total])
+      );
+    }
+    if (canReadGovernance) {
+      requests.push(
+        getDashboard({ signal: controller.signal })
+          .then((result) => ["assessments", result.kpis.openAssessments])
+      );
+      requests.push(
+        getAudit({ page: 1, limit: 1 }, { signal: controller.signal })
+          .then((result) => ["auditEvents", result.total])
+      );
+    }
+
+    Promise.all(requests)
+      .then((entries) => {
+        if (!controller.signal.aborted) {
+          setCountSnapshot({ role, counts: Object.fromEntries(entries) });
+          setCountError(null);
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setCountError({ role, message: error.message || "Live counts are unavailable." });
+        }
+      });
+    return () => controller.abort();
+  }, [role]);
 
   return (
     <>
@@ -83,6 +128,11 @@ export const Sidebar = ({ isOpen, onClose }) => {
             <nav className="space-y-1">
               {visibleItems.map((item) => {
                 const Icon = item.icon;
+                const badge = {
+                  "/tools": liveCounts.tools,
+                  "/risk-assessments": liveCounts.assessments,
+                  "/audit-log": liveCounts.auditEvents,
+                }[item.path];
                 return (
                   <NavLink
                     key={item.path}
@@ -112,7 +162,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
                           <span>{item.name}</span>
                         </div>
 
-                        {item.badge && (
+                        {typeof badge === "number" && (
                           <span
                             className={`px-1.5 py-0.5 text-[10px] font-semibold rounded-md ${
                               item.badgeColor === "amber"
@@ -120,7 +170,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
                                 : "bg-neutral-200/80 text-[#555] dark:bg-neutral-800 dark:text-[#AAA]"
                             }`}
                           >
-                            {item.badge}
+                            {badge}
                           </span>
                         )}
                       </>
@@ -136,23 +186,25 @@ export const Sidebar = ({ isOpen, onClose }) => {
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-3.5 h-3.5 text-[#1B4D3E] dark:text-emerald-400" />
               <span className="text-[11px] font-semibold text-[#1B4D3E] dark:text-emerald-300">
-                EU AI Act Ready
+                Governance in one place
               </span>
             </div>
             <p className="text-[11px] text-[#6A6D72] dark:text-[#989B9F] leading-relaxed">
-              Tier 2 risk classification active across all corporate LLM instances.
+              Track tool approvals, assessments, and audit activity.
             </p>
           </div>
         </div>
 
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-[#E8E8E4] dark:border-[#242629]">
-          <div className="flex items-center justify-between px-2 py-1.5 rounded-md text-[11px] text-[#717378] dark:text-[#8E9096] bg-neutral-100/60 dark:bg-neutral-900/60">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Policy Engine v2.4</span>
-            </div>
-            <span className="font-mono text-[10px] text-[#919398]">99.9% SLI</span>
+          {liveCountError && (
+            <p role="status" className="mb-2 px-2 text-[10px] text-rose-600 dark:text-rose-400" title={liveCountError}>
+              Live counts unavailable
+            </p>
+          )}
+          <div className="flex items-center gap-1.5 rounded-md bg-neutral-100/60 px-2 py-1.5 text-[11px] text-[#717378] dark:bg-neutral-900/60 dark:text-[#8E9096]">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span>Governance platform</span>
           </div>
         </div>
       </aside>

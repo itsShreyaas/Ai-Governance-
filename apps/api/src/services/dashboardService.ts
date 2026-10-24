@@ -1,5 +1,6 @@
-import { ApprovalStatus, RiskLevel, RequestStatus } from "@aegisai/shared";
+import { ApprovalStatus, AssessmentStatus, RiskLevel, RequestStatus } from "@aegisai/shared";
 import type { DashboardResponse } from "@aegisai/shared";
+import { Assessment } from "../models/Assessment.js";
 import { AuditEvent } from "../models/AuditEvent.js";
 import { Request } from "../models/Request.js";
 import { Tool } from "../models/Tool.js";
@@ -23,7 +24,7 @@ export async function getDashboard(now = new Date()): Promise<DashboardResponse>
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 
-  const [toolStats, reviewStats, pendingReview, recentActivity] = await Promise.all([
+  const [toolStats, reviewStats, pendingReview, recentActivity, openAssessments] = await Promise.all([
     Tool.aggregate([
       { $match: { archivedAt: null } },
       {
@@ -199,6 +200,9 @@ export async function getDashboard(now = new Date()): Promise<DashboardResponse>
         },
       },
     ]),
+    Assessment.countDocuments({
+      status: { $in: [AssessmentStatus.Draft, AssessmentStatus.Submitted] },
+    }),
   ]);
 
   const stats = toolStats[0] ?? { kpis: [], byStatus: [], byRisk: [] };
@@ -217,12 +221,11 @@ export async function getDashboard(now = new Date()): Promise<DashboardResponse>
   );
   const totalTools = kpis.totalTools;
 
-  // The Assessment API does not exist yet, so open assessments are intentionally zero.
   return DashboardResponseSchema.parse({
     kpis: {
       ...kpis,
       avgReviewDays: reviewStats[0]?.avgReviewDays ?? null,
-      openAssessments: 0,
+      openAssessments,
     },
     statusChartData: Object.values(ApprovalStatus).map((name) => ({
       name,
