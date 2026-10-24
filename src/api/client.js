@@ -21,6 +21,16 @@ function signalLogout() {
   }
 }
 
+function queryString(filters) {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== null && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  }
+  return searchParams.size > 0 ? `?${searchParams.toString()}` : "";
+}
+
 function refreshSession() {
   if (!refreshRequest) {
     refreshRequest = fetch(`${API_BASE_URL}/auth/refresh`, {
@@ -50,17 +60,20 @@ async function responseError(response) {
   );
 }
 
-async function parseResponse(response) {
+async function parseResponse(response, responseType = "json") {
   if (!response.ok) {
     throw await responseError(response);
   }
   if (response.status === 204) {
     return undefined;
   }
+  if (responseType === "blob") {
+    return response.blob();
+  }
   return response.json();
 }
 
-async function request(path, options = {}, retryOnUnauthorized = true) {
+async function request(path, options = {}, retryOnUnauthorized = true, responseType = "json") {
   const method = (options.method || "GET").toUpperCase();
   const headers = new Headers(options.headers);
   if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
@@ -93,13 +106,13 @@ async function request(path, options = {}, retryOnUnauthorized = true) {
       if (retryResponse.status === 401) {
         signalLogout();
       }
-      return parseResponse(retryResponse);
+      return parseResponse(retryResponse, responseType);
     }
 
     signalLogout();
   }
 
-  return parseResponse(response);
+  return parseResponse(response, responseType);
 }
 
 export async function login(credentials) {
@@ -129,14 +142,7 @@ export function getDashboard() {
 }
 
 export function getTools(filters = {}, options = {}) {
-  const searchParams = new URLSearchParams();
-  for (const [key, value] of Object.entries(filters)) {
-    if (value !== undefined && value !== null && value !== "") {
-      searchParams.set(key, String(value));
-    }
-  }
-  const query = searchParams.size > 0 ? `?${searchParams.toString()}` : "";
-  return request(`/tools${query}`, options);
+  return request(`/tools${queryString(filters)}`, options);
 }
 
 export function createTool(tool) {
@@ -145,4 +151,16 @@ export function createTool(tool) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(tool),
   });
+}
+
+export function getAudit(filters = {}, options = {}) {
+  return request(`/audit${queryString(filters)}`, options);
+}
+
+export function getAuditExport(filters = {}) {
+  return request(`/audit/export${queryString(filters)}`, {}, true, "blob");
+}
+
+export function verifyAuditChain() {
+  return request("/audit/verify");
 }
