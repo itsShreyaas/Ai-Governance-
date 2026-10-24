@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { ThemeContext } from "./themeContextObject";
+import { useEffect, useState, type PropsWithChildren } from "react";
+import { ThemeContext, type Theme } from "./themeContextObject";
 
-export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
+export const ThemeProvider = ({ children }: PropsWithChildren) => {
+  const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("aegis_theme");
-      if (saved) return saved;
+      if (saved === "dark" || saved === "light") return saved;
       return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
     return "light";

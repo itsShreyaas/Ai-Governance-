@@ -1,19 +1,21 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
+import type { LoginInput, UserDoc } from "@aegisai/shared";
 import * as api from "../api/client";
+import { ApiError } from "../api/client";
 import { AuthContext } from "./authContextObject";
 
 export { AuthContext };
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+export const AuthProvider = ({ children }: PropsWithChildren) => {
+  const [user, setUser] = useState<UserDoc | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState(null);
+  const [authError, setAuthError] = useState<unknown | null>(null);
 
   const loadUser = useCallback(async () => {
     try {
       setUser(await api.getMe());
-    } catch (error) {
-      if (error.status === 401) {
+    } catch (error: unknown) {
+      if (error instanceof ApiError && error.status === 401) {
         setUser(null);
       } else {
         setAuthError(error);
@@ -40,7 +42,7 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener("aegis:auth-failed", handleAuthFailure);
   }, [loadUser]);
 
-  const signIn = useCallback(async (credentials) => {
+  const signIn = useCallback(async (credentials: LoginInput) => {
     const signedInUser = await api.login(credentials);
     setUser(signedInUser);
     setAuthError(null);
