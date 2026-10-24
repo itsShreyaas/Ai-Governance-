@@ -165,7 +165,9 @@ Keep a one-page contact sheet: who owns the product, who can rotate secrets, who
 
 **Before the first pilot (P0)**
 
-- [ ] Every route has an explicit role rule; the table-driven role test passes.
+- Checklist status: 1 of 12 P0 controls verified; 0 of 5 P1 controls verified.
+
+- [x] Every route has an explicit role rule; the table-driven role test passes.
 - [ ] Login rate limiting and lockout work against a scripted attack.
 - [ ] Cookies are httpOnly, `Secure` and `SameSite`; CSRF protection is tested.
 - [ ] NoSQL operator injection attempts on login and filters are rejected.

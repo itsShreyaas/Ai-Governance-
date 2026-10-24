@@ -1,6 +1,6 @@
 # PRD - AegisAI Enterprise AI Tool Governance
 
-Oct 14, 2026 · Shreyaas Gupta
+Dec 31, 2026 · Shreyaas Gupta
 
 ## 1. Overview and vision
 
@@ -8,7 +8,7 @@ AegisAI is a web platform that gives a company one place to register, risk-rate,
 
 **Vision:** no employee uses an AI tool the company hasn't seen, assessed and put a policy around, and any auditor can prove it in minutes.
 
-**Status today:** The React frontend remains a Stage 1 prototype: the Overview dashboard, Tool Registry cards and Audit Log table use hard-coded mock data for a fictional company ("Acme Global"), and four of seven modules are placeholders marked "Stage 2 Scheduled". Stage 2a now includes an Express API with login, authentication middleware, Tool Registry, Requests, Audit, Dashboard, Settings, and Users endpoints; the frontend is not yet wired to live data.
+**Status today:** Stage 2a includes an Express API with login, role middleware, Tool Registry, Requests, Audit, Dashboard, Settings, and Users endpoints. The Overview, Tool Registry, Audit Log, sidebar counts and registry search use live API data; Policy Matrix, Risk Assessments, Employee Checker and Settings remain placeholder UI modules.
 
 **This PRD** defines what Stage 2 (a working MVP) and Stage 3 must deliver, based on what the repo already shows.
 
@@ -57,21 +57,21 @@ Five roles use the product; the repo's mock audit log already names four of them
 
 ## 5. Current state of the repo
 
-The repository is an npm-workspaces monorepo. The Vite + React 19 frontend remains at the repository root (`src/`) and includes routing, theming, dashboard components and mock data. `packages/shared` contains strict TypeScript enums, types and Zod schemas. `apps/api` contains an Express server with authentication, Tool Registry, Requests, Audit, Dashboard, Settings, and Users routes, strict TypeScript Mongoose models, database/index/seed/verification scripts, and a hash-chained `auditService` with tests. The frontend is not yet wired to the API.
+The repository is an npm-workspaces monorepo. The Vite + React 19 frontend remains at the repository root (`src/`) and includes routing, theming, dashboard components and mock data for the remaining placeholder pages. `packages/shared` contains strict TypeScript enums, types and Zod schemas. `apps/api` contains an Express server with authentication, Tool Registry, Requests, Audit, Dashboard, Settings, and Users routes, strict TypeScript Mongoose models, database/index/seed/verification scripts, and a hash-chained `auditService` with tests. The Overview, Tool Registry and Audit Log pages, sidebar counts and registry search are connected to the API; the frontend is not yet converted to TypeScript.
 
 | Module | Route | Status | Notes |
 | --- | --- | --- | --- |
-| Overview | / | Built (mock data) | 4 KPI cards, status and risk charts (Recharts), pending-review list, recent activity, print-to-PDF export |
-| Tool Registry | /tools | Partly built | Card grid of 6 tools; "Register Tool" button is disabled; no filtering or detail view |
-| Audit Log | /audit-log | Partly built | Read-only table of 10 events; export uses window.print() |
+| Overview | / | API-connected | Dashboard KPIs, status and risk charts, pending-review list and recent activity |
+| Tool Registry | /tools | API-connected | Paginated search and filters, record detail view, and Register Tool form |
+| Audit Log | /audit-log | API-connected | Filtered and paginated audit events, CSV download, and role-gated chain verification |
 | Policy Matrix | /policy-matrix | Placeholder | Describes data tiers, allowable prompts, DLP rules |
 | Risk Assessments | /risk-assessments | Placeholder | Describes NIST AI RMF, ISO 42001, EU AI Act assessments |
 | Employee Checker | /employee-checker | Placeholder | Describes self-service approval lookup |
 | Settings | /settings | Placeholder | Describes SSO, framework mapping, webhooks |
 
-**Also present:** light and dark theme, responsive sidebar and topbar, a search box in the topbar that isn't wired to anything, and sidebar badges (6 tools, 2 assessments, 10 events) that are hard-coded.
+**Also present:** light and dark theme, responsive sidebar and topbar, registry search from the topbar, and sidebar badges backed by API data.
 
-**Current foundation and gaps:** the root package is named `aegisai` and declares the API and shared package as npm workspaces. The frontend is still JavaScript and uses mock data; it is not yet wired to the implemented API. The dashboard's "+2 this month" and "Avg response 1.4d" figures remain literal UI strings, and the 2-assessments badge has no data behind it because the Assessment API is not implemented. Shared-schema and API route/service tests exist; UI tests remain absent.
+**Current foundation and gaps:** the root package is named `aegisai` and declares the API and shared package as npm workspaces. The frontend remains JavaScript; remaining placeholder pages use mock content. Unsupported dashboard metrics have been removed rather than presented as live data. The Assessment API is not implemented; the open-assessment badge counts Draft and Submitted records through the dashboard service. Shared-schema and API route/service tests exist; UI tests remain absent.
 
 ## 6. User stories
 
@@ -188,7 +188,7 @@ The frontend should stop importing mock data directly and call a data-access lay
 | Background jobs | node-cron for the MVP; Agenda later (it stores jobs in MongoDB) | Overdue-review flags and reminders (FR-7, FR-21) |
 | Notifications | Nodemailer for email; Slack incoming webhooks | FR-21 |
 | Evidence files | MongoDB GridFS for the MVP; S3-compatible storage later | FR-12 without running another service |
-| Exports | CSV generated on the server; print stylesheet for PDF | FR-16; the current window.print() approach carries over |
+| Exports | CSV generated on the server; print stylesheet for PDF | CSV export is implemented; PDF export remains planned (FR-16) |
 | Testing | Vitest and React Testing Library (web); Vitest, Supertest and mongodb-memory-server (API); Playwright for a few key flows | Unit tests for scoring and the policy resolver come first |
 | Tooling and CI | npm workspaces, Oxlint (already in the repo), GitHub Actions running lint, typecheck, test and build | Every pull request is checked |
 | Local development | Docker Compose with the API and MongoDB | One command to start |
@@ -303,7 +303,7 @@ The MVP is a success if a pilot organization moves its AI approvals into AegisAI
 
 ## 15. Open questions for the author
 
-These are the cross-questions the repo cannot answer. Your answers change scope, so please settle the first five before Stage 2 starts.
+Some decisions are recorded below from `Tech Stack.md`. Keep undecided items open until the product owner resolves them before implementing the affected scope.
 
 **Product and market**
 
@@ -320,9 +320,9 @@ These are the cross-questions the repo cannot answer. Your answers change scope,
 
 **Technical**
 
-- [ ] Do you agree with the MERN plan in section 9, with TypeScript from day one and a monorepo with a shared package? Is there a reason to keep plain JavaScript?
-- [ ] Is multi-tenancy needed, or one organization per deployment?
-- [ ] How will you prove the audit log is tamper-evident, as its page claims?
+- [x] Do you agree with the MERN plan in section 9, with TypeScript from day one and a monorepo with a shared package? Is there a reason to keep plain JavaScript? **Decided:** MERN, TypeScript and the shared package are selected; the existing frontend conversion is planned, not started.
+- [x] Is multi-tenancy needed, or one organization per deployment? **Decided:** one organization per deployment for the MVP; defer multi-tenancy.
+- [x] How will you prove the audit log is tamper-evident, as its page claims? **Decided:** use an insert-only audit collection and a hash chain, with chain verification.
 - [ ] Is the hosting in section 9 (Vercel or Netlify, Render or Railway, MongoDB Atlas) acceptable, or does a pilot customer need self-hosted Docker?
 
 **Delivery**
