@@ -44,7 +44,6 @@ const AuditEventSchema = new Schema<IAuditEvent>(
 );
 
 // Indexes from DATABASE.md
-AuditEventSchema.index({ sequence: 1 }, { unique: true });
 AuditEventSchema.index({ toolId: 1, timestamp: -1 });
 AuditEventSchema.index({ eventType: 1 });
 

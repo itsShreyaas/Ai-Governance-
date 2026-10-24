@@ -20,7 +20,6 @@ const RefreshTokenSchema = new Schema<IRefreshToken>(
 );
 
 // Indexes from DATABASE.md
-RefreshTokenSchema.index({ tokenHash: 1 }, { unique: true });
 RefreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL
 
 export const RefreshToken: Model<IRefreshToken> =

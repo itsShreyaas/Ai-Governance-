@@ -34,8 +34,5 @@ const UserSchema = new Schema<IUser>(
   { timestamps: true, strict: true }
 );
 
-// Index defined in DATABASE.md
-UserSchema.index({ email: 1 }, { unique: true });
-
 export const User: Model<IUser> =
   (mongoose.models["User"] as Model<IUser>) ?? model<IUser>("User", UserSchema);
